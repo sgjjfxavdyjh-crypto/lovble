@@ -15,6 +15,8 @@ import { CUSTOMERS, getPriceFor, CustomerType } from '@/data/pricing';
 import { Billboard } from '@/types';
 import { loadBillboards } from '@/services/billboardService';
 import { useToast } from '@/hooks/use-toast';
+import { Link } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function ClientHome() {
   const [billboards, setBillboards] = useState<Billboard[]>([]);
@@ -33,6 +35,7 @@ export default function ClientHome() {
   const [invoiceOpen, setInvoiceOpen] = useState(false);
   const pageSize = 10;
   const { toast } = useToast();
+  const { isAdmin, user, profile } = useAuth();
 
   useEffect(() => {
     const fetchBillboards = async () => {
@@ -43,7 +46,7 @@ export default function ClientHome() {
       } catch (error) {
         console.error('خطأ في تحميل اللوحات:', error);
         toast({
-          title: "خطأ في التحميل",
+          title: "خط�� في التحميل",
           description: "فشل في تحميل بيانات اللوحات الإعلانية",
           variant: "destructive"
         });
@@ -54,6 +57,13 @@ export default function ClientHome() {
 
     fetchBillboards();
   }, [toast]);
+
+  // للأدمن: التحويل تلقائياً لعرض غير المتاح والقريب الانتهاء عند أول تحميل
+  useEffect(() => {
+    if (isAdmin && selectedStatuses.length === 1 && selectedStatuses[0] === 'available') {
+      setSelectedStatuses(['rented', 'near']);
+    }
+  }, [isAdmin]);
 
   const buildMapUrl = (billboard: Billboard) => {
     const coords: any = (billboard as any).coordinates;
@@ -87,7 +97,10 @@ export default function ClientHome() {
     const matchesClient = selectedClients.length === 0 || (billboard as any).clientName && selectedClients.includes((billboard as any).clientName);
     const matchesContract = selectedContracts.length === 0 || (billboard as any).contractNumber && selectedContracts.includes((billboard as any).contractNumber);
 
-    return matchesSearch && matchesCity && matchesSize && statusMatch && matchesClient && matchesContract;
+    const assigned = !isAdmin ? ((profile as any)?.assigned_client || null) : null;
+    const assignedMatch = isAdmin || !assigned || (((billboard as any).clientName) && ((billboard as any).clientName === assigned));
+
+    return matchesSearch && matchesCity && matchesSize && statusMatch && matchesClient && matchesContract && assignedMatch;
   });
 
   const cities = [...new Set(billboards.map(b => b.city))];
@@ -192,6 +205,16 @@ export default function ClientHome() {
                   <span className="text-sm">info@billboards.ly</span>
                 </div>
               </div>
+              {!isAdmin && (
+                <Button asChild variant="secondary" className="ml-2">
+                  <Link to="/auth">تسجيل دخول الأدمن</Link>
+                </Button>
+              )}
+              {isAdmin && (
+                <Button asChild className="ml-2">
+                  <Link to="/admin">لوحة التحكم</Link>
+                </Button>
+              )}
             </div>
           </div>
         </div>
@@ -288,19 +311,23 @@ export default function ClientHome() {
                 placeholder="الحالة"
               />
 
-              <MultiSelect
-                options={clients.map(c => ({ label: c, value: c }))}
-                value={selectedClients}
-                onChange={setSelectedClients}
-                placeholder="الزبائن"
-              />
+              {isAdmin && (
+                <MultiSelect
+                  options={clients.map(c => ({ label: c, value: c }))}
+                  value={selectedClients}
+                  onChange={setSelectedClients}
+                  placeholder="الزبائن"
+                />
+              )}
 
-              <MultiSelect
-                options={contracts.map(c => ({ label: c, value: c }))}
-                value={selectedContracts}
-                onChange={setSelectedContracts}
-                placeholder={selectedClients.length ? "عقود العميل" : "أرقام العقود"}
-              />
+              {isAdmin && (
+                <MultiSelect
+                  options={contracts.map(c => ({ label: c, value: c }))}
+                  value={selectedContracts}
+                  onChange={setSelectedContracts}
+                  placeholder={selectedClients.length ? "عقود العميل" : "أرقام العقود"}
+                />
+              )}
 
               <Button
                 onClick={() => {
@@ -467,7 +494,7 @@ export default function ClientHome() {
                       <div className="text-sm text-muted-foreground">غير متاح للحجز حالياً</div>
                     ) }
 
-                    {(((billboard as any).clientName) || ((billboard as any).contractNumber) || ((billboard as any).adType) || ((billboard as any).expiryDate)) && (
+                    {isAdmin && ((((billboard as any).clientName) || ((billboard as any).contractNumber) || ((billboard as any).adType) || ((billboard as any).expiryDate)) && (
                       <div className="mt-3 rounded-xl border border-border/50 bg-white/60 dark:bg-white/5 backdrop-blur-sm p-4 shadow-card">
                         <p className="mb-3 text-sm font-semibold text-foreground">بيانات الحجز</p>
                         <div className="grid grid-cols-1 gap-3 text-xs text-muted-foreground md:grid-cols-2">
@@ -493,7 +520,7 @@ export default function ClientHome() {
                           </div>
                         </div>
                       </div>
-                    )}
+                    ))}
                   </div>
 
                   <div className="flex gap-2">

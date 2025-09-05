@@ -4,9 +4,15 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import MultiSelect from '@/components/ui/multi-select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/components/ui/sonner';
 import { MapPin, DollarSign, Filter, Plus, Search, Eye, Edit } from 'lucide-react';
 import { Billboard } from '@/types';
 import { loadBillboards } from '@/services/billboardService';
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 
 export default function Billboards() {
   const [billboards, setBillboards] = useState<Billboard[]>([]);
@@ -14,6 +20,56 @@ export default function Billboards() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [selectedCities, setSelectedCities] = useState<string[]>([]);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editing, setEditing] = useState<Billboard | null>(null);
+  const [editForm, setEditForm] = useState<any>({});
+  const [saving, setSaving] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 40;
+
+  const openEdit = (bb: Billboard) => {
+    setEditing(bb);
+    setEditForm({
+      Billboard_Name: bb.name || '',
+      City: bb.city || '',
+      Nearest_Landmark: bb.location || '',
+      Size: bb.size || '',
+      Status: bb.status || 'available',
+      Level: bb.level || 'A',
+      Price: bb.price || 0,
+      Contract_Number: (bb as any).contractNumber || '',
+      Customer_Name: (bb as any).clientName || '',
+      Ad_Type: (bb as any).adType || '',
+      Image_URL: bb.image || ''
+    });
+    setEditOpen(true);
+  };
+
+  const saveEdit = async () => {
+    if (!editing) return;
+    setSaving(true);
+    const id = editing.id;
+    const payload = { ...editForm };
+
+    let { error } = await supabase.from('billboards').update(payload).eq('ID', id);
+    if (error && (error.code === '42703' || /does not exist/i.test(error.message))) {
+      const retry = await supabase.from('billboards').update(payload).eq('id', id);
+      error = retry.error;
+    }
+
+    if (error) {
+      toast.error(`فشل حفظ التعديلات: ${error.message}`);
+    } else {
+      toast.success('تم حفظ التعديلات');
+      try {
+        const fresh = await loadBillboards();
+        setBillboards(fresh);
+      } catch {}
+      setEditOpen(false);
+      setEditing(null);
+    }
+    setSaving(false);
+  };
 
   useEffect(() => {
     const fetchBillboards = async () => {
@@ -53,12 +109,16 @@ export default function Billboards() {
     return matchesSearch && matchesStatus && matchesCity;
   });
 
+  const totalPages = Math.max(1, Math.ceil(filteredBillboards.length / PAGE_SIZE));
+  const startIndex = (currentPage - 1) * PAGE_SIZE;
+  const pagedBillboards = filteredBillboards.slice(startIndex, startIndex + PAGE_SIZE);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">جاري تحميل اللوحات الإعلانية...</p>
+          <p className="text-muted-foreground">��اري تحميل اللوحات الإعلانية...</p>
         </div>
       </div>
     );
@@ -136,7 +196,7 @@ export default function Billboards() {
 
       {/* عرض اللوحات */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredBillboards.map((billboard) => (
+        {pagedBillboards.map((billboard) => (
           <Card key={billboard.id} className="bg-gradient-card border-0 shadow-card hover:shadow-elegant transition-smooth overflow-hidden">
             <div className="relative">
               <img
@@ -182,7 +242,7 @@ export default function Billboards() {
                     <Eye className="h-4 w-4 ml-1" />
                     Details
                   </Button>
-                  <Button variant="outline" size="sm" className="flex-1">
+                  <Button variant="outline" size="sm" className="flex-1" onClick={() => openEdit(billboard)}>
                     <Edit className="h-4 w-4 ml-1" />
                     تعديل
                   </Button>
@@ -193,6 +253,39 @@ export default function Billboards() {
         ))}
       </div>
 
+      {filteredBillboards.length > 0 && (
+        <div className="mt-6">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
+                />
+              </PaginationItem>
+
+              {Array.from({ length: totalPages }).map((_, i) => (
+                <PaginationItem key={i}>
+                  <PaginationLink
+                    isActive={currentPage === i + 1}
+                    onClick={() => setCurrentPage(i + 1)}
+                  >
+                    {i + 1}
+                  </PaginationLink>
+                </PaginationItem>
+              ))}
+
+              <PaginationItem>
+                <PaginationNext
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
+      )}
+
       {filteredBillboards.length === 0 && (
         <Card className="bg-gradient-card border-0 shadow-card">
           <CardContent className="p-12 text-center">
@@ -202,6 +295,71 @@ export default function Billboards() {
           </CardContent>
         </Card>
       )}
+
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>تعديل اللوحة</DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <Label>الاسم</Label>
+              <Input value={editForm.Billboard_Name || ''} onChange={(e) => setEditForm((p: any) => ({ ...p, Billboard_Name: e.target.value }))} />
+            </div>
+            <div>
+              <Label>المدينة</Label>
+              <Input value={editForm.City || ''} onChange={(e) => setEditForm((p: any) => ({ ...p, City: e.target.value }))} />
+            </div>
+            <div className="sm:col-span-2">
+              <Label>أقرب معلم</Label>
+              <Input value={editForm.Nearest_Landmark || ''} onChange={(e) => setEditForm((p: any) => ({ ...p, Nearest_Landmark: e.target.value }))} />
+            </div>
+            <div>
+              <Label>المقاس</Label>
+              <Input value={editForm.Size || ''} onChange={(e) => setEditForm((p: any) => ({ ...p, Size: e.target.value }))} />
+            </div>
+            <div>
+              <Label>الحالة</Label>
+              <Select value={editForm.Status || 'available'} onValueChange={(v) => setEditForm((p: any) => ({ ...p, Status: v }))}>
+                <SelectTrigger><SelectValue placeholder="اختر الحالة" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="available">متاح</SelectItem>
+                  <SelectItem value="rented">مؤجر</SelectItem>
+                  <SelectItem value="maintenance">صيانة</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>المست��ى</Label>
+              <Input value={editForm.Level || ''} onChange={(e) => setEditForm((p: any) => ({ ...p, Level: e.target.value }))} />
+            </div>
+            <div>
+              <Label>السعر</Label>
+              <Input type="number" value={editForm.Price ?? ''} onChange={(e) => setEditForm((p: any) => ({ ...p, Price: Number(e.target.value) }))} />
+            </div>
+            <div>
+              <Label>رقم العقد</Label>
+              <Input value={editForm.Contract_Number || ''} onChange={(e) => setEditForm((p: any) => ({ ...p, Contract_Number: e.target.value }))} />
+            </div>
+            <div>
+              <Label>اسم الزبون</Label>
+              <Input value={editForm.Customer_Name || ''} onChange={(e) => setEditForm((p: any) => ({ ...p, Customer_Name: e.target.value }))} />
+            </div>
+            <div>
+              <Label>نوع الإعلان</Label>
+              <Input value={editForm.Ad_Type || ''} onChange={(e) => setEditForm((p: any) => ({ ...p, Ad_Type: e.target.value }))} />
+            </div>
+            <div className="sm:col-span-2">
+              <Label>رابط الصورة</Label>
+              <Input value={editForm.Image_URL || ''} onChange={(e) => setEditForm((p: any) => ({ ...p, Image_URL: e.target.value }))} />
+            </div>
+          </div>
+          <div className="flex justify-end gap-2 mt-4">
+            <Button variant="outline" onClick={() => setEditOpen(false)}>إلغاء</Button>
+            <Button onClick={saveEdit} disabled={saving}>{saving ? 'جارٍ الحفظ...' : 'حفظ'}</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

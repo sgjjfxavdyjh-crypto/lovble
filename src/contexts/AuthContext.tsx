@@ -86,16 +86,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const signUp = async (email: string, password: string, name: string) => {
-    const redirectUrl = `${window.location.origin}/`;
-    
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        emailRedirectTo: redirectUrl,
-        data: {
-          name
-        }
+        data: { name }
       }
     });
 
@@ -104,7 +99,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { error };
     }
 
-    toast.success('تم إرسال رسالة التفعيل إلى بريدك الإلكتروني');
+    try {
+      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+      if (signInError) {
+        toast.info('تم إنشاء الحساب. إذا لم يتم تسجيل الدخول تلقائياً، فقد يتطلب ��فعيل البريد في إعدادات الخادم.');
+      } else {
+        toast.success('تم إنشاء الحساب وتفعيله فوراً');
+      }
+    } catch (e) {
+      // تجاهل أي أخطاء ثانوية في تسجيل الدخول التلقائي
+    }
+
+    try {
+      if (data.user) {
+        await supabase.from('profiles').upsert({ id: data.user.id, name, role: 'client', email });
+      }
+    } catch (e) {
+      // قد تفشل إذا لم توجد صلاحيات/جدول - لا نوقف التدفق
+    }
+
     return { error: null };
   };
 

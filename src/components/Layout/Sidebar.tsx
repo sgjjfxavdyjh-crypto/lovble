@@ -1,6 +1,7 @@
 import { Home, Settings, Users, Calendar, DollarSign, BarChart3, MapPin, FileText, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/contexts/AuthContext';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 const sidebarItems = [
@@ -21,6 +22,7 @@ interface SidebarProps {
 export function Sidebar({ className }: SidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
+  const { profile, user, signOut } = useAuth();
 
   const isActive = (path: string) => {
     if (path === '/admin') return location.pathname === '/admin';
@@ -74,14 +76,15 @@ export function Sidebar({ className }: SidebarProps) {
             م
           </div>
           <div className="flex-1">
-            <p className="font-medium text-sidebar-foreground">مرحباً مدير النظام</p>
-            <p className="text-sm text-sidebar-foreground/70">admin</p>
+            <p className="font-medium text-sidebar-foreground">{profile?.name ? `مرحباً ${profile.name}` : 'مرحباً'}</p>
+            <p className="text-sm text-sidebar-foreground/70">{user?.email || 'مستخدم'}</p>
           </div>
         </div>
         
-        <Button 
-          variant="ghost" 
-          size="sm" 
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={async () => { await signOut(); navigate('/auth'); }}
           className="w-full mt-3 justify-start gap-2 text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"
         >
           <LogOut className="h-4 w-4 ml-auto" />

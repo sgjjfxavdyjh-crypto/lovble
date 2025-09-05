@@ -3,6 +3,7 @@ import { Billboard } from '@/types';
 import billboardHighway from '@/assets/billboard-highway.jpg';
 import billboardCity from '@/assets/billboard-city.jpg';
 import billboardCoastal from '@/assets/billboard-coastal.jpg';
+import { supabase } from '@/integrations/supabase/client';
 
 // تطبيع أحجام اللوحات لتكون متوافقة مع مفاتيح التسعير
 const normalizeBillboardSize = (size: string): string => {
@@ -160,6 +161,91 @@ async function readCsvFromUrl(url: string, timeoutMs = 10000) {
   }
 }
 
+function normalizeStatus(input: string | null | undefined): Billboard['status'] {
+  if (!input) return 'available';
+  const s = String(input).trim().toLowerCase();
+  if (['available', 'متاح'].includes(s)) return 'available';
+  if (['rented', 'مؤجر', 'مؤجرة'].includes(s)) return 'rented';
+  if (['maintenance', 'صيانة'].includes(s)) return 'maintenance';
+  return 'available';
+}
+
+// معالجة بيانات اللوحة من Supabase
+function processBillboardFromSupabase(row: any, index: number): Billboard {
+  const id = row['ID'] ?? row['id'] ?? row['Id'] ?? `billboard-${index + 1}`;
+  const name = row['Billboard_Name'] ?? row['name'] ?? row['لوحة'] ?? `لوحة ${index + 1}`;
+  const location = row['Nearest_Landmark'] ?? row['District'] ?? row['Municipality'] ?? row['City'] ?? 'غير محدد';
+  const municipality = row['Municipality'] ?? row['municipality'] ?? '';
+  const city = row['City'] ?? row['city'] ?? '��رابلس';
+  const rawSize = row['Size'] ?? row['المقاس مع الدغاية'] ?? row['Order_Size'] ?? '12X4';
+  const size = normalizeBillboardSize(rawSize);
+  const coordinates = row['GPS_Coordinates'] ?? row['GPS'] ?? '';
+  const level = row['Level'] ?? row['Category_Level'] ?? 'A';
+  const status = normalizeStatus(row['Status']);
+  const contractNumber = row['Contract_Number'] ?? '';
+  const clientName = row['Customer_Name'] ?? '';
+  const expiryDate = row['Rent_End_Date'] ?? '';
+  const adType = row['Ad_Type'] ?? '';
+  const daysCount = row['Days_Count'];
+
+  let nearExpiry = false;
+  let remainingDays: number | undefined = undefined;
+
+  if (expiryDate) {
+    const today = new Date();
+    const expiry = parseDateFlexible(expiryDate) || new Date(expiryDate);
+    const diffTime = expiry.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    remainingDays = Number.isFinite(diffDays) ? diffDays : undefined;
+    if (typeof remainingDays === 'number' && remainingDays <= 20 && remainingDays > 0) {
+      nearExpiry = true;
+    } else if (typeof remainingDays === 'number' && remainingDays <= 0) {
+      // انتهى العقد
+      if (status === 'rented') {
+        // إذا كانت الحالة مؤجر لكن انتهى العقد، اعتب��ها متاحة الآن
+        (row as any).Status = 'available';
+      }
+      remainingDays = 0;
+    }
+  } else if (typeof daysCount === 'number') {
+    remainingDays = daysCount;
+    if (remainingDays <= 20 && remainingDays > 0) nearExpiry = true;
+  }
+
+  let imageUrl = row['Image_URL'] ?? row['@IMAGE'] ?? '';
+  if (!imageUrl) {
+    const images = [billboardHighway, billboardCity, billboardCoastal];
+    imageUrl = images[index % images.length];
+  }
+
+  const gpsLink = row['GPS_Link'] ?? row['GPS_Link_Click'] ?? (coordinates ? `https://www.google.com/maps?q=${coordinates}` : undefined);
+
+  const priceRaw = row['Price'] ?? row['price'];
+  const price = typeof priceRaw === 'number' ? priceRaw : parseInt(String(priceRaw || '').replace(/[^\d]/g, ''), 10) || 3000;
+  const installationPrice = Math.round(price * 0.2);
+
+  return {
+    id: String(id),
+    name: String(name),
+    location: String(location),
+    size,
+    price,
+    installationPrice,
+    status: normalizeStatus(row['Status']),
+    city: String(city),
+    coordinates: String(coordinates || ''),
+    description: `لوحة إعلانية ${size} في ${municipality || location}`,
+    image: imageUrl,
+    contractNumber: contractNumber || undefined,
+    clientName: clientName || undefined,
+    expiryDate: expiryDate || undefined,
+    nearExpiry,
+    remainingDays,
+    adType: adType || undefined,
+    level: String(level),
+  };
+}
+
 // معالجة بيانات اللوحة من CSV
 function processBillboardFromCSV(row: any, index: number): Billboard {
   const id = row['ر.م'] || `billboard-${index + 1}`;
@@ -255,30 +341,49 @@ function processBillboardFromCSV(row: any, index: number): Billboard {
 
 export async function loadBillboards(): Promise<Billboard[]> {
   try {
-    // محاولة تحميل البيانات من الرابط المباشر  
+    // أولاً: جلب من Supabase إذا توفر جدول billboards
+    console.log('[Service] محاولة تحميل اللوحات من Supabase...');
+    const { data: rows, error: dbError } = await supabase
+      .from('billboards')
+      .select('*');
+
+    if (!dbError && Array.isArray(rows) && rows.length > 0) {
+      console.log(`[Service] تم استلام ${rows.length} صف من Supabase`);
+      const billboards = rows.map((row: any, index: number) => processBillboardFromSupabase(row, index));
+      console.log(`[Service] إرجاع ${billboards.length} لوحة من Supabase`);
+      return billboards;
+    }
+
+    if (dbError) {
+      console.warn('[Service] تعذر جلب Supabase، سيتم استخدام Google Sheets. الخطأ:', dbError.message);
+    } else {
+      console.log('[Service] جدول billboards فارغ أو غير متاح، سيتم استخدام Google Sheets');
+    }
+
+    // ثانياً: محاولة تحميل البيانات من Google Sheets كاحتياطي
     console.log('[Service] بدء تحميل البيانات من Google Sheets...');
     const data = await readCsvFromUrl(CSV_URL);
-    
+
     console.log(`[Service] تم استلام ${data.length} صف من البيانات`);
     if (data.length > 0) {
       console.log('[Service] أعمدة الملف:', Object.keys(data[0]));
     }
-    
-    const billboards: Billboard[] = data.map((row: any, index: number) => 
+
+    const billboards: Billboard[] = data.map((row: any, index: number) =>
       processBillboardFromCSV(row, index)
     );
 
     console.log(`[Service] تم معالجة ${billboards.length} لوحة إعلانية`);
-    
+
     console.log(`[Service] إرجاع ${billboards.length} لوحة بعد المعالجة (بدون فلترة إضافية)`);
     return billboards;
-    
+
   } catch (error) {
-    console.error('[Service] خطأ في تحميل البيانات من Google Sheets:', error);
-    
+    console.error('[Service] خطأ في تحميل البيانات من Supabase/Google Sheets:', error);
+
     // البيانات الافتراضية في حالة فشل التحميل
     const images = [billboardHighway, billboardCity, billboardCoastal];
-    
+
     return [
       {
         id: '1',
