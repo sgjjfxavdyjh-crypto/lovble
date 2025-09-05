@@ -1,0 +1,165 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* تصميم نظام اللوحات الإعلانية - ألوان ذهبية وأسود عصري */
+
+@layer base {
+  :root {
+    --background: 0 0% 98%;
+    --foreground: 0 0% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 15%;
+
+    /* ألوان ذهبية أساسية */
+    --primary: 42 65% 55%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 45 100% 70%;
+    --primary-dark: 40 45% 40%;
+
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 15%;
+
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 45%;
+
+    --accent: 42 65% 55%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 98%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 98%;
+
+    --border: 0 0% 90%;
+    --input: 0 0% 95%;
+    --ring: 42 65% 55%;
+
+    --radius: 0.75rem;
+
+    /* نظام الشريط الجانبي الأسود والذهبي */
+    --sidebar-background: 0 0% 8%;
+    --sidebar-foreground: 0 0% 85%;
+    --sidebar-primary: 42 65% 55%;
+    --sidebar-primary-foreground: 0 0% 8%;
+    --sidebar-accent: 0 0% 12%;
+    --sidebar-accent-foreground: 0 0% 85%;
+    --sidebar-border: 0 0% 15%;
+    --sidebar-ring: 42 65% 55%;
+
+    /* تدرجات ذهبية جميلة */
+    --gradient-primary: linear-gradient(135deg, hsl(42 65% 55%), hsl(45 100% 70%));
+    --gradient-dark: linear-gradient(135deg, hsl(0 0% 8%), hsl(0 0% 15%));
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%), hsl(0 0% 98%));
+    
+    /* ظلال أنيقة */
+    --shadow-elegant: 0 10px 30px -10px hsl(42 65% 55% / 0.3);
+    --shadow-card: 0 4px 20px -5px hsl(0 0% 0% / 0.1);
+    --shadow-glow: 0 0 40px hsl(45 100% 70% / 0.4);
+
+    /* انتقالات سلسة */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-fast: all 0.2s ease-out;
+  }
+
+  .dark {
+    --background: 0 0% 8%;
+    --foreground: 0 0% 95%;
+
+    --card: 0 0% 12%;
+    --card-foreground: 0 0% 95%;
+
+    --popover: 0 0% 12%;
+    --popover-foreground: 0 0% 95%;
+
+    --primary: 42 65% 55%;
+    --primary-foreground: 0 0% 8%;
+    --primary-glow: 45 100% 70%;
+    --primary-dark: 40 45% 40%;
+
+    --secondary: 0 0% 15%;
+    --secondary-foreground: 0 0% 85%;
+
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 65%;
+
+    --accent: 42 65% 55%;
+    --accent-foreground: 0 0% 8%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 98%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 98%;
+
+    --border: 0 0% 20%;
+    --input: 0 0% 15%;
+    --ring: 42 65% 55%;
+
+    --sidebar-background: 0 0% 5%;
+    --sidebar-foreground: 0 0% 85%;
+    --sidebar-primary: 42 65% 55%;
+    --sidebar-primary-foreground: 0 0% 5%;
+    --sidebar-accent: 0 0% 10%;
+    --sidebar-accent-foreground: 0 0% 85%;
+    --sidebar-border: 0 0% 12%;
+    --sidebar-ring: 42 65% 55%;
+
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 12%), hsl(0 0% 10%));
+    --shadow-card: 0 4px 20px -5px hsl(0 0% 0% / 0.3);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Cairo', 'Tajawal', system-ui, sans-serif;
+  }
+
+  /* تحسينات للغة العربية */
+  [dir="rtl"] {
+    text-align: right;
+  }
+
+  /* تحسينات الخطوط العربية */
+  .font-arabic {
+    font-family: 'Cairo', 'Tajawal', system-ui, sans-serif;
+  }
+
+  /* تأثيرات التمرير السلسة */
+  * {
+    transition: var(--transition-smooth);
+  }
+
+  /* تحسين تباين الألوان */
+  .text-primary {
+    color: hsl(var(--primary));
+  }
+
+  .bg-gradient-primary {
+    background: var(--gradient-primary);
+  }
+
+  .shadow-elegant {
+    box-shadow: var(--shadow-elegant);
+  }
+
+  .shadow-glow {
+    box-shadow: var(--shadow-glow);
+  }
+}
