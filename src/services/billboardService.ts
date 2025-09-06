@@ -9,7 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 const normalizeBillboardSize = (size: string): string => {
   if (!size) return '4x12';
 
-  // تحويل النص إلى صغير وإزالة المسافات
+  // تحويل النص إلى صغير وإ��الة المسافات
   let normalized = size.toString().trim().toLowerCase();
 
   // استبدال X بـ x
@@ -128,7 +128,7 @@ async function readCsvFromUrl(url: string, timeoutMs = 10000) {
       const line = lines[i].trim();
       if (!line) continue;
 
-      // تحليل أفضل للـ CSV مع مراعاة النصوص المقتبسة
+      // تحليل أفضل للـ CSV مع مراعاة النصوص المقتب��ة
       const values = [];
       let currentValue = '';
       let insideQuotes = false;
@@ -174,9 +174,10 @@ function normalizeStatus(input: string | null | undefined): Billboard['status'] 
 function processBillboardFromSupabase(row: any, index: number): Billboard {
   const id = row['ID'] ?? row['id'] ?? row['Id'] ?? `billboard-${index + 1}`;
   const name = row['Billboard_Name'] ?? row['name'] ?? row['لوحة'] ?? `لوحة ${index + 1}`;
-  const location = row['Nearest_Landmark'] ?? row['District'] ?? row['Municipality'] ?? row['City'] ?? 'غير محدد';
+  const location = row['Nearest_Landmark'] ?? row['District'] ?? row['Municipality'] ?? row['City'] ?? '';
   const municipality = row['Municipality'] ?? row['municipality'] ?? '';
-  const city = row['City'] ?? row['city'] ?? '��رابلس';
+  const district = row['District'] ?? row['district'] ?? '';
+  const city = row['City'] ?? row['city'] ?? 'طرابلس';
   const rawSize = row['Size'] ?? row['المقاس مع الدغاية'] ?? row['Order_Size'] ?? '12X4';
   const size = normalizeBillboardSize(rawSize);
   const coordinates = row['GPS_Coordinates'] ?? row['GPS'] ?? '';
@@ -233,6 +234,8 @@ function processBillboardFromSupabase(row: any, index: number): Billboard {
     installationPrice,
     status: normalizeStatus(row['Status']),
     city: String(city),
+    district: String(district || ''),
+    municipality: String(municipality || ''),
     coordinates: String(coordinates || ''),
     description: `لوحة إعلانية ${size} في ${municipality || location}`,
     image: imageUrl,
@@ -250,10 +253,10 @@ function processBillboardFromSupabase(row: any, index: number): Billboard {
 function processBillboardFromCSV(row: any, index: number): Billboard {
   const id = row['ر.م'] || `billboard-${index + 1}`;
   const name = row['اسم لوحة'] || `لوحة ${index + 1}`;
-  const location = row['اقرب نقطة دالة'] || 'غير محدد';
-  const municipality = row['البلدية'] || 'غير محدد';
+  const location = row['اقرب نقطة دالة'] || '';
+  const municipality = row['البلدية'] || '';
   const city = row['مدينة'] || 'طرابلس';
-  const area = row['منطقة'] || municipality;
+  const area = row['منطقة'] || row['الحي'] || row['District'] || municipality;
   const rawSize = row['حجم'] || '12X4';
   const size = normalizeBillboardSize(rawSize);
   const coordinates = row['احداثي - GPS'] || '32.8872,13.1913';
@@ -326,6 +329,8 @@ function processBillboardFromCSV(row: any, index: number): Billboard {
     installationPrice,
     status,
     city,
+    district: area,
+    municipality,
     coordinates,
     description: `لوحة إعلانية ${size} في ${location}`,
     image: imageUrl,
@@ -400,7 +405,7 @@ export async function loadBillboards(): Promise<Billboard[]> {
       },
       {
         id: '2',
-        name: 'لوحة شارع الجمهورية',
+        name: 'لوحة شار�� الجمهورية',
         location: 'شارع الجمهورية، طرابلس',
         size: '5x13',
         price: 2500,

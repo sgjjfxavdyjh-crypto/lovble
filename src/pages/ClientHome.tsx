@@ -36,6 +36,7 @@ export default function ClientHome() {
   const pageSize = 10;
   const { toast } = useToast();
   const { isAdmin, user, profile } = useAuth();
+  const defaultCustomer = (profile?.price_tier as CustomerType) || CUSTOMERS[0];
 
   useEffect(() => {
     const fetchBillboards = async () => {
@@ -46,7 +47,7 @@ export default function ClientHome() {
       } catch (error) {
         console.error('خطأ في تحميل اللوحات:', error);
         toast({
-          title: "خط�� في التحميل",
+          title: "خطأ في التحميل",
           description: "فشل في تحميل بيانات اللوحات الإعلانية",
           variant: "destructive"
         });
@@ -56,7 +57,7 @@ export default function ClientHome() {
     };
 
     fetchBillboards();
-  }, [toast]);
+  }, []);
 
   // للأدمن: التحويل تلقائياً لعرض غير المتاح والقريب الانتهاء عند أول تحميل
   useEffect(() => {
@@ -97,8 +98,8 @@ export default function ClientHome() {
     const matchesClient = selectedClients.length === 0 || (billboard as any).clientName && selectedClients.includes((billboard as any).clientName);
     const matchesContract = selectedContracts.length === 0 || (billboard as any).contractNumber && selectedContracts.includes((billboard as any).contractNumber);
 
-    const assigned = !isAdmin ? ((profile as any)?.assigned_client || null) : null;
-    const assignedMatch = isAdmin || !assigned || (((billboard as any).clientName) && ((billboard as any).clientName === assigned));
+    const allowed = !isAdmin ? ((profile as any)?.allowed_clients as string[] | null) : null;
+    const assignedMatch = isAdmin || !allowed || allowed.length === 0 || (((billboard as any).clientName) && allowed.includes((billboard as any).clientName));
 
     return matchesSearch && matchesCity && matchesSize && statusMatch && matchesClient && matchesContract && assignedMatch;
   });
@@ -113,10 +114,16 @@ export default function ClientHome() {
       .filter(Boolean)
   )] as string[];
 
-  // ت��كد من مزامنة العقود المختارة مع العملاء المختارين
+  // تأكد من مزامنة العقود المختارة مع العملاء المختارين بدون تحد��ثات غير ضرورية
   useEffect(() => {
     const valid = new Set(contracts);
-    setSelectedContracts(prev => prev.filter(c => valid.has(c)));
+    setSelectedContracts(prev => {
+      const next = prev.filter(c => valid.has(c));
+      if (next.length === prev.length && next.every((v, i) => v === prev[i])) {
+        return prev;
+      }
+      return next;
+    });
   }, [contracts]);
 
   const totalPages = Math.max(1, Math.ceil(filteredBillboards.length / pageSize));
@@ -136,7 +143,7 @@ export default function ClientHome() {
       const billboard = billboards.find(b => b.id === id);
       if (!billboard) return total;
       const months = packageById[id] || 1;
-      const customer = customerTypeById[id] || CUSTOMERS[0];
+      const customer = customerTypeById[id] || defaultCustomer;
       const price = getPriceFor(billboard.size, (billboard as any).level, customer, months) ?? 0;
       return total + price;
     }, 0);
@@ -159,7 +166,7 @@ export default function ClientHome() {
 
     toast({
       title: "تم إرسال طلب الحجز",
-      description: `تم إرسال طلب حجز ${selectedBillboards.length} لوحة بإجمالي ${getSelectedTotal().toLocaleString()} د.ل`,
+      description: `تم إرسال طلب حجز ${selectedBillboards.length} لوحة بإجم��لي ${getSelectedTotal().toLocaleString()} د.ل`,
     });
 
     // إعادة تعيين الاختيارات
@@ -185,13 +192,11 @@ export default function ClientHome() {
         <div className="max-w-7xl mx-auto px-6 py-8">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="w-16 h-16 bg-gradient-primary rounded-2xl flex items-center justify-center shadow-glow">
-                <MapPin className="h-8 w-8 text-white" />
-              </div>
-              <div>
-                <h1 className="text-3xl font-bold text-white mb-2">منصة اللوحات الإعلانية</h1>
-                <p className="text-white/80">اكتشف أفضل المواقع الإعلانية في ليبيا</p>
-              </div>
+              <img
+                src="https://cdn.builder.io/api/v1/image/assets%2Ffc68c2d70dd74affa9a5bbf7eee66f4a%2F8d67e8499cfc4a8caf22e6c6835ab764?format=webp&width=128"
+                alt="شعار الفارس الذهبي"
+                className="w-16 h-16 rounded-2xl shadow-glow object-cover"
+              />
             </div>
             
             <div className="flex items-center gap-4">
@@ -430,10 +435,22 @@ export default function ClientHome() {
                         </span>
                       ) }
                     </div>
-                    <div className="flex items-center gap-2 text-muted-foreground text-base">
-                      <MapPin className="h-4 w-4" />
-                      <span>{billboard.location}</span>
-                    </div>
+                    {(billboard.location && billboard.location !== 'غير محدد') && (
+                      <div className="flex items-center gap-2 text-muted-foreground text-base">
+                        <MapPin className="h-4 w-4" />
+                        <span>{billboard.location}</span>
+                      </div>
+                    )}
+                    {(((billboard as any).district && (billboard as any).district !== 'غير محدد') || ((billboard as any).municipality && (billboard as any).municipality !== 'غير محدد')) ? (
+                      <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                        {(billboard as any).district && (billboard as any).district !== 'غير محدد' && (
+                          <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5">{(billboard as any).district}</span>
+                        )}
+                        {(billboard as any).municipality && (billboard as any).municipality !== 'غير محدد' && (
+                          <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5">البلدية: {(billboard as any).municipality}</span>
+                        )}
+                      </div>
+                    ) : null}
                   </div>
 
                   <div className="space-y-3">
@@ -442,7 +459,7 @@ export default function ClientHome() {
                         <div className="flex items-center justify-between">
                           <span className="text-sm text-muted-foreground">السعر حسب الباقة:</span>
                           <span className="font-semibold text-primary">
-                            {(() => { const months = packageById[billboard.id] || 1; const customer = customerTypeById[billboard.id] || CUSTOMERS[0]; const price = getPriceFor(billboard.size, (billboard as any).level, customer, months); return (price ?? 0).toLocaleString(); })()} د.ل
+                            {(() => { const months = packageById[billboard.id] || 1; const customer = customerTypeById[billboard.id] || defaultCustomer; const price = getPriceFor(billboard.size, (billboard as any).level, customer, months); return (price ?? 0).toLocaleString(); })()} د.ل
                           </span>
                         </div>
 
@@ -482,7 +499,7 @@ export default function ClientHome() {
                             <span className="font-bold text-primary text-xl">
                               {(() => {
                                 const months = packageById[billboard.id] || 1;
-                                const customer = customerTypeById[billboard.id] || CUSTOMERS[0];
+                                const customer = customerTypeById[billboard.id] || defaultCustomer;
                                 const price = getPriceFor(billboard.size, (billboard as any).level, customer, months);
                                 return (price ?? 0).toLocaleString();
                               })()} د.ل
@@ -557,7 +574,7 @@ export default function ClientHome() {
                         className="flex-1"
                         onClick={() => {
                           const months = packageById[billboard.id] || 1;
-                          const customer = customerTypeById[billboard.id] || CUSTOMERS[0];
+                          const customer = customerTypeById[billboard.id] || defaultCustomer;
                           const price = getPriceFor(billboard.size, (billboard as any).level, customer, months) ?? 0;
                           toast({ title: 'تم إضافة حجز', description: `تم اختيار ${customer} لمدة ${months} شهر بإجمالي ${price.toLocaleString()} د.ل` });
                         }}
@@ -641,7 +658,7 @@ export default function ClientHome() {
                       </SelectContent>
                     </Select>
 
-                    <Select value={String((() => { const anyId = selectedBillboards[0]; return (customerTypeById[anyId] || CUSTOMERS[0]); })())} onValueChange={(v) => {
+                    <Select value={String((() => { const anyId = selectedBillboards[0]; return (customerTypeById[anyId] || defaultCustomer); })())} onValueChange={(v) => {
                       const customer = v as any;
                       setCustomerTypeById(prev => {
                         const next = { ...prev } as any;
@@ -650,7 +667,7 @@ export default function ClientHome() {
                       });
                     }}>
                       <SelectTrigger className="bg-white/10 text-white border-white/20">
-                        <SelectValue placeholder="نوع الزبون"></SelectValue>
+                        <SelectValue placeholder="نوع ال��بون"></SelectValue>
                       </SelectTrigger>
                       <SelectContent>
                         {CUSTOMERS.map(c => (

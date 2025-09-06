@@ -1,5 +1,5 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import * as UIDialog from '@/components/ui/dialog';
 import type { Billboard } from '@/types';
 import { CustomerType, CUSTOMERS, getPriceFor } from '@/data/pricing';
 
@@ -15,6 +15,17 @@ function format(n: number | null | undefined) {
   return (n ?? 0).toLocaleString();
 }
 
+function formatMonths(m: number) {
+  switch (m) {
+    case 1: return 'شهر';
+    case 2: return 'شهران';
+    case 3: return '3 ��شهر';
+    case 6: return '6 أشهر';
+    case 12: return 'سنة';
+    default: return `${m} أشهر`;
+  }
+}
+
 function buildInvoiceHtml(props: Props) {
   const { items, monthsById, customerById } = props;
   const rows = items.map((b) => {
@@ -28,13 +39,15 @@ function buildInvoiceHtml(props: Props) {
 
   const rowsHtml = rows.map(({ b, months, customer, unit, total }) => `
     <tr>
-      <td style="padding:8px;border-bottom:1px solid #eee;text-align:right">${b.id}</td>
-      <td style="padding:8px;border-bottom:1px solid #eee;text-align:right"><img src="${b.image || '/placeholder.svg'}" alt="${b.name}" style="height:64px;border-radius:8px" /></td>
-      <td style="padding:8px;border-bottom:1px solid #eee;text-align:right">${b.name}</td>
-      <td style="padding:8px;border-bottom:1px solid #eee;text-align:right">${b.size}${(b as any).level ? ' / ' + (b as any).level : ''}</td>
-      <td style="padding:8px;border-bottom:1px solid #eee;text-align:right">${months}</td>
-      <td style="padding:8px;border-bottom:1px solid #eee;text-align:right">${format(unit)} د.ل</td>
-      <td style="padding:8px;border-bottom:1px solid #eee;text-align:right">${format(total)} د.ل</td>
+      <td class="cell">${b.id}</td>
+      <td class="cell"><img src="${b.image || '/placeholder.svg'}" alt="${b.name}" class="thumb" /></td>
+      <td class="cell">${(b as any).municipality || ''}</td>
+      <td class="cell">${(b as any).district || ''}</td>
+      <td class="cell">${b.location || ''}</td>
+      <td class="cell">${b.size}${(b as any).level ? ' / ' + (b as any).level : ''}</td>
+      <td class="cell">${formatMonths(months)}</td>
+      <td class="cell">${format(unit)} د.ل</td>
+      <td class="cell">${b.status === 'rented' ? 'محجوز' : b.status === 'maintenance' ? 'صيانة' : 'متاح'}</td>
     </tr>
   `).join('');
 
@@ -45,11 +58,15 @@ function buildInvoiceHtml(props: Props) {
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <style>
       body{font-family:'Cairo','Tajawal',system-ui,sans-serif;color:#111}
-      .container{max-width:960px;margin:24px auto;padding:16px}
-      .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
-      .title{font-weight:700;font-size:20px}
+      .container{max-width:1100px;margin:24px auto;padding:16px}
+      .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+      .title{font-weight:800;font-size:26px;letter-spacing:.5px}
+      .brand{display:flex;align-items:center;gap:12px}
+      .brand-mark{width:56px;height:56px;border-radius:12px;object-fit:cover}
       table{width:100%;border-collapse:collapse}
-      th{background:#f7f7f7;padding:8px;text-align:right;border-bottom:1px solid #eee}
+      th{background:#f7f3e3;color:#000;padding:10px 8px;text-align:right;border-bottom:2px solid #e6d698;font-weight:700}
+      td.cell{padding:8px;border-bottom:1px solid #eee;text-align:right;vertical-align:middle}
+      .thumb{height:64px;border-radius:8px}
       tfoot td{font-weight:700}
       .meta{color:#666;font-size:12px}
       .actions{margin-top:16px}
@@ -60,16 +77,21 @@ function buildInvoiceHtml(props: Props) {
         <div class="title">فاتورة اللوحات المختارة</div>
         <div class="meta">التاريخ: ${new Date().toLocaleDateString('ar-LY')}</div>
       </div>
+      <div class="brand" style="margin-bottom:8px">
+        <img class="brand-mark" src="https://cdn.builder.io/api/v1/image/assets%2Ffc68c2d70dd74affa9a5bbf7eee66f4a%2F8d67e8499cfc4a8caf22e6c6835ab764?format=webp&width=256" alt="شعار الفارس الذهبي" />
+      </div>
       <table>
         <thead>
           <tr>
-            <th>الكود</th>
-            <th>الصورة</th>
-            <th>الوصف</th>
-            <th>المقاس/المستوى</th>
-            <th>الباقة (أشهر)</th>
+            <th>رقم اللوحة</th>
+            <th>صورة اللوحة</th>
+            <th>البلدية</th>
+            <th>المنطقة</th>
+            <th>أقرب نقطة دالة</th>
+            <th>المقاس</th>
+            <th>المدة</th>
             <th>السعر</th>
-            <th>الإجمالي</th>
+            <th>الحالة</th>
           </tr>
         </thead>
         <tbody>
@@ -77,7 +99,7 @@ function buildInvoiceHtml(props: Props) {
         </tbody>
         <tfoot>
           <tr>
-            <td colspan="6" style="padding:8px;text-align:left">الإجمالي الكلي</td>
+            <td colspan="8" style="padding:8px;text-align:left">الإجمالي الكلي</td>
             <td style="padding:8px;text-align:right">${format(grand)} د.ل</td>
           </tr>
         </tfoot>
@@ -101,16 +123,16 @@ export default function InvoiceDialog(props: Props) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl">
-        <DialogHeader>
-          <DialogTitle>فاتورة اللوحات المختارة</DialogTitle>
-        </DialogHeader>
+    <UIDialog.Dialog open={open} onOpenChange={onOpenChange}>
+      <UIDialog.DialogContent className="max-w-5xl">
+        <UIDialog.DialogHeader>
+          <UIDialog.DialogTitle>فاتورة اللوحات المختارة</UIDialog.DialogTitle>
+        </UIDialog.DialogHeader>
         <div className="overflow-x-auto">
           <div className="text-sm text-muted-foreground mb-3">راجع تفاصيل اللوحات ثم اطبع الفاتورة.</div>
           <Button onClick={handlePrint} className="bg-primary text-primary-foreground">طباعة</Button>
         </div>
-      </DialogContent>
-    </Dialog>
+      </UIDialog.DialogContent>
+    </UIDialog.Dialog>
   );
 }

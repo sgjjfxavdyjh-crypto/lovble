@@ -11,6 +11,9 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/components/ui/sonner';
 import { supabase } from '@/integrations/supabase/client';
+import MultiSelect from '@/components/ui/multi-select';
+import { CUSTOMERS } from '@/data/pricing';
+import { loadBillboards } from '@/services/billboardService';
 
 interface Permissions {
   can_view_unavailable?: boolean;
@@ -36,6 +39,8 @@ interface ProfileRow {
   email: string | null;
   role: string | null;
   created_at: string | null;
+  allowed_clients?: string[] | null;
+  price_tier?: string | null;
 }
 
 export default function Users() {
@@ -49,22 +54,51 @@ export default function Users() {
   const [hasAssignedClient, setHasAssignedClient] = useState<boolean>(true);
   const [hasPermissions, setHasPermissions] = useState<boolean>(true);
   const [permOpenId, setPermOpenId] = useState<string | null>(null);
+  const [allClients, setAllClients] = useState<string[]>([]);
 
   const fetchPage = async (pageIndex: number) => {
     setLoading(true);
     setError(null);
     const from = (pageIndex - 1) * PAGE_SIZE;
     const to = from + PAGE_SIZE - 1;
-    // حاول أولاً مع assigned_client، وإن لم يوجد العمود فfallback بدونه
+
+    try {
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess?.session?.access_token || '';
+      const res = await fetch(`/.netlify/functions/admin-list-profiles?from=${from}&to=${to}` , {
+        headers: { Authorization: token ? `Bearer ${token}` : '' }
+      });
+      if (res.ok) {
+        const json = await res.json();
+        const normalize = (v: any): string[] | null => {
+          if (!v) return null;
+          if (Array.isArray(v)) return v.map(String);
+          return null;
+        };
+        const data = (json.data || []).map((d: any) => ({
+          ...d,
+          allowed_clients: normalize(d.allowed_clients),
+          price_tier: d.price_tier ?? null,
+        }));
+        setRows(data);
+        setCount(json.count || 0);
+        setHasAssignedClient(Boolean(json.hasAssignedClient));
+        setHasPermissions(Boolean(json.hasPermissions));
+        setLoading(false);
+        return;
+      }
+    } catch (e: any) {
+      // fallthrough to direct supabase query
+    }
+
+    // Fallback to direct query (may be limited by RLS)
     let resp = await supabase
       .from('profiles')
-      .select('id,name,email,role,created_at', { count: 'exact' })
+      .select('id,name,email,role,created_at,allowed_clients,price_tier', { count: 'exact' })
       .order('created_at', { ascending: false })
       .range(from, to);
 
     if (resp.error && (resp.error.code === '42703' || /does not exist/i.test(resp.error.message))) {
-      // probe which column missing by trying assigned_client then permissions separately
-      // try without permissions
       let probe = await supabase
         .from('profiles')
         .select('id,name,email,role,created_at', { count: 'exact' })
@@ -73,7 +107,6 @@ export default function Users() {
 
       if (probe.error && (probe.error.code === '42703' || /does not exist/i.test(probe.error.message))) {
         setHasAssignedClient(false);
-        // try without both
         resp = await supabase
           .from('profiles')
           .select('id,name,email,role,created_at', { count: 'exact' })
@@ -93,7 +126,17 @@ export default function Users() {
       setRows([]);
       setCount(0);
     } else {
-      setRows(resp.data || []);
+      const normalize = (v: any): string[] | null => {
+        if (!v) return null;
+        if (Array.isArray(v)) return v.map(String);
+        return null;
+      };
+      const data = (resp.data || []).map((d: any) => ({
+        ...d,
+        allowed_clients: normalize(d.allowed_clients),
+        price_tier: d.price_tier ?? null,
+      }));
+      setRows(data);
       setCount(resp.count || 0);
     }
     setLoading(false);
@@ -101,6 +144,15 @@ export default function Users() {
 
   useEffect(() => {
     fetchPage(page);
+    (async () => {
+      try {
+        const bbs = await loadBillboards();
+        const clients = Array.from(new Set(bbs.map(b => (b as any).clientName).filter(Boolean))) as string[];
+        setAllClients(clients);
+      } catch (e) {
+        setAllClients([]);
+      }
+    })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page]);
 
@@ -108,7 +160,7 @@ export default function Users() {
 
   const handleSave = async (row: ProfileRow) => {
     setSavingId(row.id);
-    let payload: any = { role: row.role };
+    let payload: any = { role: row.role, price_tier: row.price_tier ?? null, allowed_clients: row.allowed_clients ?? null };
 
     let { error } = await supabase
       .from('profiles')
@@ -149,7 +201,7 @@ export default function Users() {
             <div className="text-sm text-warning mt-2">حقل الزبون المخصص غير موجود في profiles. يمكن إضافته لاحقاً.</div>
           )}
           {!hasPermissions && (
-            <div className="text-sm text-warning mt-1">حقل الصلاحيات غير موجود في profiles. يمكن إضافته لاحقاً.</div>
+            <div className="text-sm text-warning mt-1">��قل الصلاحيات غير موجود في profiles. يمكن إضافته لاحقاً.</div>
           )}
         </CardHeader>
         <CardContent>
@@ -167,6 +219,8 @@ export default function Users() {
                     <TableHead>الاسم</TableHead>
                     <TableHead>البريد الإلكتروني</TableHead>
                     <TableHead>الدور</TableHead>
+                    <TableHead>الزبائن المسموح بهم</TableHead>
+                    <TableHead>فئة الأسعار</TableHead>
                     <TableHead>تاريخ الإنشاء</TableHead>
                     <TableHead>المعرف</TableHead>
                     <TableHead>إجراءات</TableHead>
@@ -191,6 +245,32 @@ export default function Users() {
                           </SelectContent>
                         </Select>
                       </TableCell>
+
+                      <TableCell className="min-w-[240px]">
+                        <MultiSelect
+                          options={allClients.map(c => ({ label: c, value: c }))}
+                          value={(r.allowed_clients || []) as string[]}
+                          onChange={(vals) => setRows(prev => prev.map(x => x.id === r.id ? { ...x, allowed_clients: vals } : x))}
+                          placeholder="اختر الزبائن"
+                        />
+                      </TableCell>
+
+                      <TableCell className="min-w-[160px]">
+                        <Select
+                          value={r.price_tier || ''}
+                          onValueChange={(val) => setRows((prev) => prev.map((x) => x.id === r.id ? { ...x, price_tier: val } : x))}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="اختر الفئة" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {CUSTOMERS.map(c => (
+                              <SelectItem key={c} value={c}>{c}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+
                       <TableCell>{r.created_at ? new Date(r.created_at).toLocaleString() : '—'}</TableCell>
                       <TableCell className="font-mono text-xs">{r.id}</TableCell>
                       <TableCell>

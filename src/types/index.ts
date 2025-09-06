@@ -17,6 +17,8 @@ export interface Billboard {
   remainingDays?: number;
   adType?: string;
   level?: string;
+  district?: string;
+  municipality?: string;
 }
 
 export interface User {
