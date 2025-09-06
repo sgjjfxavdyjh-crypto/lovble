@@ -13,8 +13,8 @@ import Billboards from "./pages/Billboards";
 import Bookings from "./pages/Bookings";
 import NotFound from "./pages/NotFound";
 import PricingList from "./pages/PricingList";
-import Users from "./pages/Users";
 import Contracts from "./pages/Contracts";
+import Users from "./pages/Users";
 
 const queryClient = new QueryClient();
 
@@ -47,12 +47,12 @@ const App = () => (
           <Route path="/users" element={<MainLayout><div className="p-8 text-center"><h2 className="text-2xl font-bold text-muted-foreground">صفحة المستخدمين قيد التطوير</h2></div></MainLayout>} />
           <Route path="/pricing" element={<MainLayout><PricingList /></MainLayout>} />
           <Route path="/reports" element={<MainLayout><div className="p-8 text-center"><h2 className="text-2xl font-bold text-muted-foreground">صفحة التقارير قيد التطوير</h2></div></MainLayout>} />
-          <Route path="/contracts" element={<MainLayout><div className="p-8 text-center"><h2 className="text-2xl font-bold text-muted-foreground">صفحة العقود قيد التطوير</h2></div></MainLayout>} />
+          <Route path="/contracts" element={<MainLayout><Contracts /></MainLayout>} />
           <Route path="/settings" element={<MainLayout><div className="p-8 text-center"><h2 className="text-2xl font-bold text-muted-foreground">صفحة الإعدادات قيد التطوير</h2></div></MainLayout>} />
           
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
-        </Routes>
+          </Routes>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>

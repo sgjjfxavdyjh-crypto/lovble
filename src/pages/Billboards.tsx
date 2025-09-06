@@ -51,11 +51,7 @@ export default function Billboards() {
     const id = editing.id;
     const payload = { ...editForm };
 
-    let { error } = await supabase.from('billboards').update(payload).eq('ID', id);
-    if (error && (error.code === '42703' || /does not exist/i.test(error.message))) {
-      const retry = await supabase.from('billboards').update(payload).eq('id', id);
-      error = retry.error;
-    }
+    const { error } = await supabase.from('billboards').update(payload).eq('ID', Number(id));
 
     if (error) {
       toast.error(`فشل حفظ التعديلات: ${error.message}`);
@@ -217,12 +213,7 @@ export default function Billboards() {
             <CardContent className="p-6">
               <div className="space-y-4">
                 <div>
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-bold text-lg text-foreground mb-1">{billboard.name}</h3>
-                    {billboard.contractNumber && (
-                      <div className="text-xs bg-primary text-primary-foreground px-2 py-1 rounded">عقد #{billboard.contractNumber}</div>
-                    )}
-                  </div>
+                  <h3 className="font-bold text-lg text-foreground mb-1">{billboard.name}</h3>
                   <div className="flex items-center gap-2 text-muted-foreground text-sm">
                     <MapPin className="h-4 w-4" />
                     <span>{billboard.location}</span>

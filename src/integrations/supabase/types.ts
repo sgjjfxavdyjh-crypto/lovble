@@ -16,72 +16,110 @@ export type Database = {
     Tables: {
       billboards: {
         Row: {
-          ad_type: string | null
-          city: string | null
-          client_name: string | null
-          contract_number: string | null
-          coordinates: string | null
-          created_at: string | null
-          description: string | null
-          expiry_date: string | null
-          id: string
-          image_url: string | null
-          installation_price: number | null
-          level: string | null
-          location: string
-          name: string
-          near_expiry: boolean | null
-          price: number
-          remaining_days: number | null
-          size: string
-          status: string | null
-          updated_at: string | null
+          "@IMAGE": string | null
+          Ad_Type: string | null
+          Billboard_Name: string | null
+          Category_Level: string | null
+          City: string | null
+          contract_id: string | null
+          Contract_Number: string | null
+          customer_name: string | null
+          Customer_Name: string | null
+          Days_Count: string | null
+          District: string | null
+          end_date: string | null
+          Faces_Count: string | null
+          GPS_Coordinates: string | null
+          GPS_Link: string | null
+          GPS_Link_Click: string | null
+          ID: number | null
+          Image_URL: string | null
+          Level: string | null
+          Municipality: string | null
+          Nearest_Landmark: string | null
+          Order_Size: number | null
+          Price: string | null
+          Rent_End_Date: string | null
+          Rent_Start_Date: string | null
+          Review: string | null
+          Size: string | null
+          start_date: string | null
+          Status: string | null
+          "المقاس مع الدغاية": string | null
         }
         Insert: {
-          ad_type?: string | null
-          city?: string | null
-          client_name?: string | null
-          contract_number?: string | null
-          coordinates?: string | null
-          created_at?: string | null
-          description?: string | null
-          expiry_date?: string | null
-          id?: string
-          image_url?: string | null
-          installation_price?: number | null
-          level?: string | null
-          location: string
-          name: string
-          near_expiry?: boolean | null
-          price: number
-          remaining_days?: number | null
-          size: string
-          status?: string | null
-          updated_at?: string | null
+          "@IMAGE"?: string | null
+          Ad_Type?: string | null
+          Billboard_Name?: string | null
+          Category_Level?: string | null
+          City?: string | null
+          contract_id?: string | null
+          Contract_Number?: string | null
+          customer_name?: string | null
+          Customer_Name?: string | null
+          Days_Count?: string | null
+          District?: string | null
+          end_date?: string | null
+          Faces_Count?: string | null
+          GPS_Coordinates?: string | null
+          GPS_Link?: string | null
+          GPS_Link_Click?: string | null
+          ID?: number | null
+          Image_URL?: string | null
+          Level?: string | null
+          Municipality?: string | null
+          Nearest_Landmark?: string | null
+          Order_Size?: number | null
+          Price?: string | null
+          Rent_End_Date?: string | null
+          Rent_Start_Date?: string | null
+          Review?: string | null
+          Size?: string | null
+          start_date?: string | null
+          Status?: string | null
+          "المقاس مع الدغاية"?: string | null
         }
         Update: {
-          ad_type?: string | null
-          city?: string | null
-          client_name?: string | null
-          contract_number?: string | null
-          coordinates?: string | null
-          created_at?: string | null
-          description?: string | null
-          expiry_date?: string | null
-          id?: string
-          image_url?: string | null
-          installation_price?: number | null
-          level?: string | null
-          location?: string
-          name?: string
-          near_expiry?: boolean | null
-          price?: number
-          remaining_days?: number | null
-          size?: string
-          status?: string | null
-          updated_at?: string | null
+          "@IMAGE"?: string | null
+          Ad_Type?: string | null
+          Billboard_Name?: string | null
+          Category_Level?: string | null
+          City?: string | null
+          contract_id?: string | null
+          Contract_Number?: string | null
+          customer_name?: string | null
+          Customer_Name?: string | null
+          Days_Count?: string | null
+          District?: string | null
+          end_date?: string | null
+          Faces_Count?: string | null
+          GPS_Coordinates?: string | null
+          GPS_Link?: string | null
+          GPS_Link_Click?: string | null
+          ID?: number | null
+          Image_URL?: string | null
+          Level?: string | null
+          Municipality?: string | null
+          Nearest_Landmark?: string | null
+          Order_Size?: number | null
+          Price?: string | null
+          Rent_End_Date?: string | null
+          Rent_Start_Date?: string | null
+          Review?: string | null
+          Size?: string | null
+          start_date?: string | null
+          Status?: string | null
+          "المقاس مع الدغاية"?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "billboards_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       bookings: {
         Row: {
@@ -122,34 +160,115 @@ export type Database = {
         }
         Relationships: []
       }
+      contracts: {
+        Row: {
+          ad_type: string | null
+          created_at: string
+          customer_name: string
+          end_date: string
+          id: string
+          rent_cost: number
+          start_date: string
+          updated_at: string
+        }
+        Insert: {
+          ad_type?: string | null
+          created_at?: string
+          customer_name: string
+          end_date: string
+          id?: string
+          rent_cost?: number
+          start_date: string
+          updated_at?: string
+        }
+        Update: {
+          ad_type?: string | null
+          created_at?: string
+          customer_name?: string
+          end_date?: string
+          id?: string
+          rent_cost?: number
+          start_date?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      pricing: {
+        Row: {
+          "2_Months": number | null
+          "3_Months": number | null
+          "6_Months": number | null
+          Billboard_Level: string | null
+          Customer_Category: string | null
+          Full_Year: number | null
+          id: number | null
+          One_Day: number | null
+          One_Month: string | null
+          size: string | null
+        }
+        Insert: {
+          "2_Months"?: number | null
+          "3_Months"?: number | null
+          "6_Months"?: number | null
+          Billboard_Level?: string | null
+          Customer_Category?: string | null
+          Full_Year?: number | null
+          id?: number | null
+          One_Day?: number | null
+          One_Month?: string | null
+          size?: string | null
+        }
+        Update: {
+          "2_Months"?: number | null
+          "3_Months"?: number | null
+          "6_Months"?: number | null
+          Billboard_Level?: string | null
+          Customer_Category?: string | null
+          Full_Year?: number | null
+          id?: number | null
+          One_Day?: number | null
+          One_Month?: string | null
+          size?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
+          allowed_clients: Json | null
           company: string | null
           created_at: string | null
           email: string | null
           id: string
           name: string | null
+          password: string | null
           phone: string | null
+          price_tier: string | null
           role: string | null
           updated_at: string | null
         }
         Insert: {
+          allowed_clients?: Json | null
           company?: string | null
           created_at?: string | null
           email?: string | null
           id: string
           name?: string | null
+          password?: string | null
           phone?: string | null
+          price_tier?: string | null
           role?: string | null
           updated_at?: string | null
         }
         Update: {
+          allowed_clients?: Json | null
           company?: string | null
           created_at?: string | null
           email?: string | null
           id?: string
           name?: string | null
+          password?: string | null
           phone?: string | null
+          price_tier?: string | null
           role?: string | null
           updated_at?: string | null
         }
@@ -160,7 +279,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      admin_set_profile_password: {
+        Args: { p_password: string; p_user_id: string }
+        Returns: undefined
+      }
+      auto_release_expired_billboards: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

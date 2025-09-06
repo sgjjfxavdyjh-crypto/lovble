@@ -16,6 +16,7 @@ export interface Billboard {
   nearExpiry?: boolean;
   remainingDays?: number;
   adType?: string;
+  level?: string;
 }
 
 export interface User {

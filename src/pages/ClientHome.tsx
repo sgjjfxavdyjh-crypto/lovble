@@ -15,9 +15,8 @@ import { CUSTOMERS, getPriceFor, CustomerType } from '@/data/pricing';
 import { Billboard } from '@/types';
 import { loadBillboards } from '@/services/billboardService';
 import { useToast } from '@/hooks/use-toast';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
 
 export default function ClientHome() {
   const [billboards, setBillboards] = useState<Billboard[]>([]);
@@ -36,39 +35,18 @@ export default function ClientHome() {
   const [invoiceOpen, setInvoiceOpen] = useState(false);
   const pageSize = 10;
   const { toast } = useToast();
-  const navigate = useNavigate();
-  const { isAdmin, user, profile, signOut } = useAuth();
-
-  const [bookedIds, setBookedIds] = useState<Set<string>>(new Set());
+  const { isAdmin, user, profile } = useAuth();
 
   useEffect(() => {
     const fetchBillboards = async () => {
       try {
         setLoading(true);
         const data = await loadBillboards();
-
-        // جلب الحجوزات الحالية من قاعدة البيانات واستبعاد اللوحات المحجوزة
-        const booked = new Set<string>();
-        try {
-          const { data: bookings } = await supabase.from('bookings').select('billboard_ids,status');
-          (bookings || []).forEach((b: any) => {
-            if (!b || !b.billboard_ids) return;
-            // نعتبر أي حالة غير ملغاة محجوزة
-            if (!b.status || b.status === 'cancelled') return;
-            (b.billboard_ids || []).forEach((id: string) => booked.add(id));
-          });
-          setBookedIds(booked);
-        } catch (e) {
-          // تجاهل أخطاء جلب الحجوزات
-        }
-
-        // استبعاد اللوحات التي تم حجزها
-        const filtered = (data || []).filter((b: any) => !booked.has(b.id));
-        setBillboards(filtered);
+        setBillboards(data);
       } catch (error) {
         console.error('خطأ في تحميل اللوحات:', error);
         toast({
-          title: "خطأ في التحميل",
+          title: "خط�� في التحميل",
           description: "فشل في تحميل بيانات اللوحات الإعلانية",
           variant: "destructive"
         });
@@ -78,7 +56,6 @@ export default function ClientHome() {
     };
 
     fetchBillboards();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [toast]);
 
   // للأدمن: التحويل تلقائياً لعرض غير المتاح والقريب الانتهاء عند أول تحميل
@@ -123,21 +100,7 @@ export default function ClientHome() {
     const assigned = !isAdmin ? ((profile as any)?.assigned_client || null) : null;
     const assignedMatch = isAdmin || !assigned || (((billboard as any).clientName) && ((billboard as any).clientName === assigned));
 
-    // إذا كانت للملف الشخصي قائمة زبائن مسموح بها، أعرض فقط اللوحات التابعة لهم
-    const allowedClients: string[] | undefined = (profile as any)?.allowed_clients;
-    const allowedMatch = !allowedClients || allowedClients.length === 0 || ((billboard as any).clientName && allowedClients.includes((billboard as any).clientName));
-
-    // فلترة حسب فئة السعر إن كانت محددة في بروفايل المستخدم
-    const priceTier: string | undefined = (profile as any)?.price_tier;
-    let priceMatch = true;
-    if (priceTier) {
-      const price = billboard.price ?? (billboard as any).price ?? 0;
-      if (priceTier === 'basic') priceMatch = price <= 5000;
-      else if (priceTier === 'silver') priceMatch = price > 5000 && price <= 15000;
-      else if (priceTier === 'gold') priceMatch = price > 15000;
-    }
-
-    return matchesSearch && matchesCity && matchesSize && statusMatch && matchesClient && matchesContract && assignedMatch && allowedMatch && priceMatch;
+    return matchesSearch && matchesCity && matchesSize && statusMatch && matchesClient && matchesContract && assignedMatch;
   });
 
   const cities = [...new Set(billboards.map(b => b.city))];
@@ -153,14 +116,7 @@ export default function ClientHome() {
   // ت��كد من مزامنة العقود المختارة مع العملاء المختارين
   useEffect(() => {
     const valid = new Set(contracts);
-    setSelectedContracts(prev => {
-      const filtered = prev.filter(c => valid.has(c));
-      // avoid updating state if nothing changed to prevent re-renders
-      if (filtered.length === prev.length && filtered.every((v, i) => v === prev[i])) {
-        return prev;
-      }
-      return filtered;
-    });
+    setSelectedContracts(prev => prev.filter(c => valid.has(c)));
   }, [contracts]);
 
   const totalPages = Math.max(1, Math.ceil(filteredBillboards.length / pageSize));
@@ -249,27 +205,15 @@ export default function ClientHome() {
                   <span className="text-sm">info@billboards.ly</span>
                 </div>
               </div>
-              {isAdmin && (
-                <>
-                  <Button asChild className="ml-2">
-                    <Link to="/admin">لوحة التحكم</Link>
-                  </Button>
-                  <Button className="ml-2" onClick={async () => { await signOut(); navigate('/'); }}>
-                    تسجيل الخروج
-                  </Button>
-                </>
-              )}
-
-              {!isAdmin && user ? (
-                <Button variant="secondary" className="ml-2" onClick={async () => { await signOut(); navigate('/'); }}>
-                  تسجيل الخروج
+              {!isAdmin && (
+                <Button asChild variant="secondary" className="ml-2">
+                  <Link to="/auth">تسجيل دخول الأدمن</Link>
                 </Button>
-              ) : (
-                !user && (
-                  <Button asChild variant="secondary" className="ml-2">
-                    <Link to="/auth">تسجيل دخول الأدمن</Link>
-                  </Button>
-                )
+              )}
+              {isAdmin && (
+                <Button asChild className="ml-2">
+                  <Link to="/admin">لوحة التحكم</Link>
+                </Button>
               )}
             </div>
           </div>
@@ -361,10 +305,10 @@ export default function ClientHome() {
               />
 
               <MultiSelect
-                options={[{label:'متاح', value:'available'},{label:'محجو��', value:'rented'},{label:'قريبة الانتهاء', value:'near'}]}
+                options={[{label:'متاح', value:'available'},{label:'محجوز', value:'rented'},{label:'قريبة الانتهاء', value:'near'}]}
                 value={selectedStatuses}
                 onChange={setSelectedStatuses}
-                placeholder="��لحالة"
+                placeholder="الحالة"
               />
 
               {isAdmin && (

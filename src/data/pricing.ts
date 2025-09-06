@@ -7,7 +7,7 @@ export type PricingRow = {
   الزبون: CustomerType;
   'شهر واحد': number | string | null;
   '2 أشهر': number | string | null;
-  '3 ��شهر': number | string | null;
+  '3 أشهر': number | string | null;
   '6 أشهر': number | string | null;
   'سنة كاملة': number | string | null;
   'يوم واحد': number | string | null;
