@@ -217,7 +217,12 @@ export default function Billboards() {
             <CardContent className="p-6">
               <div className="space-y-4">
                 <div>
-                  <h3 className="font-bold text-lg text-foreground mb-1">{billboard.name}</h3>
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-bold text-lg text-foreground mb-1">{billboard.name}</h3>
+                    {billboard.contractNumber && (
+                      <div className="text-xs bg-primary text-primary-foreground px-2 py-1 rounded">عقد #{billboard.contractNumber}</div>
+                    )}
+                  </div>
                   <div className="flex items-center gap-2 text-muted-foreground text-sm">
                     <MapPin className="h-4 w-4" />
                     <span>{billboard.location}</span>

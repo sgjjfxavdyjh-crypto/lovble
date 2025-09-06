@@ -38,6 +38,8 @@ interface ProfileRow {
   assigned_client?: string | null;
   permissions?: Permissions | null;
   created_at: string | null;
+  price_tier?: string | null;
+  allowed_clients?: string[] | null;
 }
 
 export default function Users() {
@@ -52,15 +54,35 @@ export default function Users() {
   const [hasPermissions, setHasPermissions] = useState<boolean>(true);
   const [permOpenId, setPermOpenId] = useState<string | null>(null);
 
+  const [clientsList, setClientsList] = useState<{ id: string; name: string | null }[]>([]);
+  const PRICE_TIERS = [
+    { id: 'basic', label: 'الأساسية' },
+    { id: 'silver', label: 'الفضية' },
+    { id: 'gold', label: 'الذهبية' },
+  ];
+
+  // password change modal state
+  const [pwOpenId, setPwOpenId] = useState<string | null>(null);
+  const [newPassword, setNewPassword] = useState<string>('');
+
   const fetchPage = async (pageIndex: number) => {
     setLoading(true);
     setError(null);
     const from = (pageIndex - 1) * PAGE_SIZE;
     const to = from + PAGE_SIZE - 1;
-    // حاول أولاً مع assigned_client، وإن لم يوجد العمود فfallback بدونه
+
+    // جلب قائمة الزبائن (العملاء) للاستخدام في اختيار أسماء الزبائن
+    try {
+      const { data: clients } = await supabase.from('profiles').select('id,name').eq('role', 'client');
+      setClientsList((clients as any) || []);
+    } catch (e) {
+      // تجاهل خطأ جلب العملاء
+    }
+
+    // حاول أولاً مع assigned_client وprice_tier وallowed_clients، وإن لم توجد أعمدة فfallback بدونهما
     let resp = await supabase
       .from('profiles')
-      .select('id,name,email,role,assigned_client,permissions,created_at', { count: 'exact' })
+      .select('id,name,email,role,assigned_client,permissions,created_at,price_tier,allowed_clients', { count: 'exact' })
       .order('created_at', { ascending: false })
       .range(from, to);
 
@@ -113,6 +135,9 @@ export default function Users() {
     let payload: any = { role: row.role };
     if (hasAssignedClient) payload.assigned_client = row.assigned_client;
     if (hasPermissions) payload.permissions = row.permissions || defaultPermissions;
+    // new optional fields
+    if ((row as any).price_tier !== undefined) payload.price_tier = (row as any).price_tier;
+    if ((row as any).allowed_clients !== undefined) payload.allowed_clients = (row as any).allowed_clients;
 
     let { error } = await supabase
       .from('profiles')
@@ -124,7 +149,7 @@ export default function Users() {
       if (hasPermissions) {
         let retry1 = await supabase
           .from('profiles')
-          .update({ role: row.role, assigned_client: hasAssignedClient ? row.assigned_client : undefined })
+          .update({ role: row.role, assigned_client: hasAssignedClient ? row.assigned_client : undefined, price_tier: (row as any).price_tier })
           .eq('id', row.id);
         if (retry1.error && (retry1.error.code === '42703' || /does not exist/i.test(retry1.error.message))) {
           setHasAssignedClient(false);
@@ -150,6 +175,14 @@ export default function Users() {
     if (error) {
       toast.error(`فشل حفظ التعديلات: ${error.message}`);
     } else {
+      // save allowed_clients separately if present and column exists
+      if ((row as any).allowed_clients !== undefined) {
+        const { error: err2 } = await supabase.from('profiles').update({ allowed_clients: (row as any).allowed_clients }).eq('id', row.id);
+        if (err2) {
+          // ignore if column doesn't exist
+        }
+      }
+
       toast.success('تم حفظ التعديلات بنجاح');
       fetchPage(page);
     }
@@ -191,6 +224,8 @@ export default function Users() {
                     <TableHead>البريد الإلكتروني</TableHead>
                     <TableHead>الدور</TableHead>
                     {hasAssignedClient && <TableHead>الزبون المخصص</TableHead>}
+                    <TableHead>فئة السعر</TableHead>
+                    <TableHead>الزبائن المسموحين</TableHead>
                     <TableHead>تاريخ الإنشاء</TableHead>
                     <TableHead>المعرف</TableHead>
                     <TableHead>إجراءات</TableHead>
@@ -225,10 +260,55 @@ export default function Users() {
                           />
                         </TableCell>
                       )}
+
+                      {/* Price tier column */}
+                      <TableCell className="min-w-[160px]">
+                        <Select
+                          value={(r as any).price_tier || ''}
+                          onValueChange={(val) => setRows(prev => prev.map(x => x.id === r.id ? { ...x, price_tier: val } : x))}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="فئة السعر" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {PRICE_TIERS.map(t => (
+                              <SelectItem key={t.id} value={t.id}>{t.label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+
+                      {/* Allowed clients multi-select (simple textarea comma-separated fallback) */}
+                      <TableCell className="min-w-[240px]">
+                        {clientsList.length > 0 ? (
+                          <select
+                            multiple
+                            value={((r as any).allowed_clients || []) as string[]}
+                            onChange={(e) => {
+                              const vals = Array.from(e.target.selectedOptions).map(o => o.value);
+                              setRows(prev => prev.map(x => x.id === r.id ? { ...x, allowed_clients: vals } : x));
+                            }}
+                            className="w-full border rounded p-2"
+                          >
+                            {clientsList.map(c => (
+                              <option key={c.id} value={c.name || c.id}>{c.name || c.id}</option>
+                            ))}
+                          </select>
+                        ) : (
+                          <Input
+                            value={((r as any).allowed_clients || []).join(',')}
+                            placeholder="أسماء الزبائن مفصولة بفواصل"
+                            onChange={(e) => setRows(prev => prev.map(x => x.id === r.id ? { ...x, allowed_clients: e.target.value.split(',').map(s => s.trim()).filter(Boolean) } : x))}
+                          />
+                        )}
+                      </TableCell>
                       <TableCell>{r.created_at ? new Date(r.created_at).toLocaleString() : '—'}</TableCell>
                       <TableCell className="font-mono text-xs">{r.id}</TableCell>
                       <TableCell>
-                        <Button size="sm" onClick={() => handleSave(r)} disabled={savingId === r.id}>حفظ</Button>
+                        <div className="flex gap-2">
+                          <Button size="sm" onClick={() => handleSave(r)} disabled={savingId === r.id}>حفظ</Button>
+                          <Button size="sm" variant="outline" onClick={() => { setPwOpenId(r.id); setNewPassword(''); }}>تعيين كلمة مرور</Button>
+                        </div>
                       </TableCell>
                       {hasPermissions && (
                         <TableCell>
@@ -245,7 +325,7 @@ export default function Users() {
                                   can_view_unavailable: 'عرض غير المتاح/قرب الانتهاء',
                                   can_manage_billboards: 'إدارة اللوحات',
                                   can_manage_bookings: 'إدارة الحجوزات',
-                                  can_view_reports: 'عرض التقارير',
+                                  can_view_reports: 'عرض ��لتقارير',
                                   can_manage_pricing: 'إدارة الأسعار',
                                   can_manage_users: 'إدارة المستخدمين',
                                 }).map(([key, label]) => (
@@ -267,6 +347,48 @@ export default function Users() {
                           </Dialog>
                         </TableCell>
                       )}
+
+                      {/* Password dialog - outside permissions cell so it renders once per row via pwOpenId */}
+                      <Dialog open={pwOpenId === r.id} onOpenChange={(o) => setPwOpenId(o ? r.id : null)}>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>تعيين كلمة مرور للمستخدم: {r.name || r.email}</DialogTitle>
+                          </DialogHeader>
+                          <div className="mt-2">
+                            <Label>كلمة المرور الجديدة</Label>
+                            <Input value={newPassword} onChange={(e) => setNewPassword(e.target.value)} type="password" />
+                          </div>
+                          <div className="flex justify-end gap-2 mt-4">
+                            <Button variant="outline" onClick={() => setPwOpenId(null)}>إلغاء</Button>
+                            <Button onClick={async () => {
+                              try {
+                                setSavingId(r.id);
+                                // include current user's access token so the server function can verify admin role
+                                const { data: sessionData } = await supabase.auth.getSession();
+                                const token = (sessionData as any)?.session?.access_token;
+                                const res = await fetch('/.netlify/functions/admin-set-profile-password', {
+                                  method: 'POST',
+                                  headers: {
+                                    'Content-Type': 'application/json',
+                                    'Authorization': token ? `Bearer ${token}` : ''
+                                  },
+                                  body: JSON.stringify({ userId: r.id, password: newPassword })
+                                });
+                                const data = await res.json().catch(() => ({}));
+                                if (!res.ok) {
+                                  throw new Error(data?.error || 'فشل في تغيير كلمة المرور');
+                                }
+                                toast.success('تم تعيين كلمة المرور بنجاح');
+                                setPwOpenId(null);
+                              } catch (e: any) {
+                                toast.error(e?.message || 'فشل تعيين كلمة المرور');
+                              } finally {
+                                setSavingId(null);
+                              }
+                            }} disabled={savingId === r.id || !newPassword}>حفظ كلمة المرور</Button>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
                     </TableRow>
                   ))}
                 </TableBody>

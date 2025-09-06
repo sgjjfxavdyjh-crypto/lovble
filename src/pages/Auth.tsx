@@ -11,6 +11,7 @@ import { useAuth } from '@/contexts/AuthContext';
 export default function Auth() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
@@ -27,7 +28,8 @@ export default function Auth() {
     e.preventDefault();
     setLoading(true);
     
-    const { error } = await signIn(email, password);
+    const identifier = username || email; // fallback to email if username empty
+    const { error } = await signIn(identifier, password);
     
     if (!error) {
       navigate('/');
@@ -92,13 +94,13 @@ export default function Auth() {
               <TabsContent value="signin" className="space-y-4 mt-6">
                 <form onSubmit={handleSignIn} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="signin-email">البريد الإلكتروني</Label>
+                    <Label htmlFor="signin-username">اسم المستخدم</Label>
                     <Input
-                      id="signin-email"
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="example@domain.com"
+                      id="signin-username"
+                      type="text"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      placeholder="اسم المستخدم"
                       required
                       disabled={loading}
                     />

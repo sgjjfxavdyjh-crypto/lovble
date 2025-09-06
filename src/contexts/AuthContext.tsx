@@ -7,7 +7,7 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   signUp: (email: string, password: string, name: string) => Promise<{ error: any }>;
-  signIn: (email: string, password: string) => Promise<{ error: any }>;
+  signIn: (identifier: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   loading: boolean;
   profile: any;
@@ -99,15 +99,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { error };
     }
 
-    try {
-      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
-      if (signInError) {
-        toast.info('تم إنشاء الحساب. إذا لم يتم تسجيل الدخول تلقائياً، فقد يتطلب ��فعيل البريد في إعدادات الخادم.');
-      } else {
-        toast.success('تم إنشاء الحساب وتفعيله فوراً');
-      }
-    } catch (e) {
-      // تجاهل أي أخطاء ثانوية في تسجيل الدخول التلقائي
+    // محاولة تسجيل الدخول مباشرةً باستخدام كلمة المرور (تحقق من قاعدة البيانات)
+    const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+    if (signInError) {
+      toast.error(signInError.message);
+      return { error: signInError };
     }
 
     try {
@@ -118,14 +114,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // قد تفشل إذا لم توجد صلاحيات/جدول - لا نوقف التدفق
     }
 
+    toast.success('تم إنشاء الحساب وتسجيل الدخول بنجاح');
     return { error: null };
   };
 
-  const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+  const signIn = async (identifier: string, password: string) => {
+    // identifier can be username or email. Attempt to resolve to email via profiles table.
+    let emailToUse: string | null = null;
+
+    try {
+      // try to find by username (column 'username')
+      let { data: profile, error } = await supabase
+        .from('profiles')
+        .select('id,email,name,username')
+        .or(`username.eq.${identifier},name.eq.${identifier}`)
+        .maybeSingle();
+
+      if (!error && profile) {
+        if ((profile as any).email) emailToUse = (profile as any).email;
+      }
+    } catch (e) {
+      // ignore
+    }
+
+    // if identifier looks like an email, use it directly
+    if (!emailToUse && identifier.includes('@')) {
+      emailToUse = identifier;
+    }
+
+    if (!emailToUse) {
+      const msg = 'لم أتمكن من العثور على بريد مرتبط باسم المستخدم.';
+      toast.error(msg);
+      return { error: new Error(msg) };
+    }
+
+    const { error } = await supabase.auth.signInWithPassword({ email: emailToUse, password });
 
     if (error) {
       toast.error(error.message);
