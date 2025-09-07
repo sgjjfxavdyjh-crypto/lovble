@@ -1,4 +1,5 @@
 export interface Billboard {
+  // Supabase/legacy fields
   ID: number;
   Billboard_Name: string;
   City: string;
@@ -25,6 +26,28 @@ export interface Billboard {
   '@IMAGE'?: string;
   GPS_Link_Click?: string;
   'المقاس مع الدغاية'?: string;
+
+  // App-level normalized fields
+  id?: string;
+  name?: string;
+  location?: string;
+  size?: string;
+  price?: number;
+  installationPrice?: number;
+  status?: 'available' | 'rented' | 'maintenance';
+  city?: string;
+  district?: string;
+  municipality?: string;
+  coordinates?: { lat: number; lng: number } | string;
+  image?: string;
+  description?: string;
+  contractNumber?: string;
+  clientName?: string;
+  expiryDate?: string;
+  nearExpiry?: boolean;
+  remainingDays?: number;
+  adType?: string;
+  level?: string;
 }
 
 export interface Contract {
@@ -58,12 +81,12 @@ export interface Pricing {
   size: string;
   Billboard_Level: string;
   Customer_Category: string;
-  One_Day: number;
-  One_Month: number;
-  '2_Months': number;
-  '3_Months': number;
-  '6_Months': number;
-  Full_Year: number;
+  One_Day: number | null;
+  One_Month: number | null;
+  '2_Months': number | null;
+  '3_Months': number | null;
+  '6_Months': number | null;
+  Full_Year: number | null;
 }
 
 export interface BookingRequest {

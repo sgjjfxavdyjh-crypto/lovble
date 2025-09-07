@@ -61,16 +61,32 @@ export const UsersTable = () => {
 
   const loadCustomers = async () => {
     try {
+      // المحاولة 1: من الجدول القديم Contract
       const { data, error } = await supabase
         .from('Contract')
         .select('"Customer Name"');
-      if (error) throw error;
-      const list = Array.from(new Set(((data as any[]) ?? []).map((r: any) => r['Customer Name']).filter(Boolean))).sort(
+
+      if (!error && Array.isArray(data)) {
+        const list = Array.from(new Set(((data as any[]) ?? []).map((r: any) => r['Customer Name']).filter(Boolean))).sort(
+          (a, b) => String(a).localeCompare(String(b), 'ar')
+        ) as string[];
+        setCustomers(list);
+        return;
+      }
+
+      // المحاولة 2: من الج��ول الحديث contracts
+      const { data: v2, error: e2 } = await supabase
+        .from('contracts')
+        .select('customer_name');
+
+      if (e2) throw e2;
+
+      const list = Array.from(new Set(((v2 as any[]) ?? []).map((r: any) => r.customer_name).filter(Boolean))).sort(
         (a, b) => String(a).localeCompare(String(b), 'ar')
       ) as string[];
       setCustomers(list);
-    } catch (e) {
-      console.error('loadCustomers error', e);
+    } catch (e: any) {
+      console.error('loadCustomers error', e?.message || JSON.stringify(e));
     }
   };
 
@@ -206,7 +222,7 @@ export const UsersTable = () => {
         </div>
       </div>
 
-      {/* إحصائيات سريعة */}
+      {/* إحصائيات س��يعة */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-4">

@@ -50,7 +50,7 @@ export const BillboardGridCard: React.FC<BillboardGridCardProps> = ({
   const isNearExpiry = daysRemaining !== null && daysRemaining <= 20;
 
   return (
-    <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-300 border border-border/50">
+    <Card className="overflow-hidden rounded-2xl bg-gradient-card border-0 shadow-card hover:shadow-luxury transition-smooth">
       <div className="relative">
         {/* صورة اللوحة */}
         <div className="aspect-video bg-muted relative overflow-hidden">
@@ -97,26 +97,37 @@ export const BillboardGridCard: React.FC<BillboardGridCardProps> = ({
         <CardContent className="p-4">
           {/* معرف اللوحة */}
           <div className="mb-3">
-            <h3 className="font-bold text-lg text-foreground">
+            <h3 className="font-extrabold text-2xl md:text-3xl text-foreground tracking-tight">
               {billboard.Billboard_Name || `لوحة رقم ${billboard.ID}`}
             </h3>
           </div>
 
           {/* الموقع */}
           <div className="space-y-2 mb-4">
-            <div className="flex items-center text-sm text-muted-foreground">
-              <MapPin className="h-4 w-4 mr-2 flex-shrink-0" />
-              <span className="truncate">
-                {billboard.District && billboard.City 
-                  ? `${billboard.District}, ${billboard.City}`
-                  : billboard.Nearest_Landmark || 'غير محدد'
-                }
-              </span>
-            </div>
-            
-            {billboard.Nearest_Landmark && billboard.District && (
-              <div className="text-xs text-muted-foreground pr-6">
+            {/* السطر 1: المدينة (الموقع) */}
+            {(billboard.City || billboard.Municipality) && (
+              <div className="flex items-center text-lg text-foreground font-semibold">
+                <MapPin className="h-4 w-4 mr-2 flex-shrink-0" />
+                <span className="truncate">{billboard.City || billboard.Municipality}</span>
+              </div>
+            )}
+
+            {/* السطر 2: أقرب نقطة دالة */}
+            {billboard.Nearest_Landmark && (
+              <div className="text-sm text-muted-foreground pr-6">
                 {billboard.Nearest_Landmark}
+              </div>
+            )}
+
+            {/* السطر 3: المنطقة + البلدية */}
+            {(billboard.District || billboard.Municipality) && (
+              <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                {billboard.District && (
+                  <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5">{billboard.District}</span>
+                )}
+                {billboard.Municipality && (
+                  <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5">البلدية: {billboard.Municipality}</span>
+                )}
               </div>
             )}
           </div>
@@ -151,15 +162,6 @@ export const BillboardGridCard: React.FC<BillboardGridCardProps> = ({
             </div>
           )}
 
-          {/* السعر */}
-          <div className="mb-4">
-            <div className="text-2xl font-bold text-primary">
-              {billboard.Price || '0'} <span className="text-base font-semibold">د.ل</span>
-            </div>
-            <div className="text-sm text-muted-foreground">
-              السعر حسب الفترة
-            </div>
-          </div>
 
           {/* أزرار الإجراءات */}
           {showBookingActions && (

@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import BillboardsMap from '@/components/Map/BillboardsMap';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 import InvoiceDialog from '@/components/Invoice/InvoiceDialog';
+import QuoteDialog from '@/components/Invoice/QuoteDialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { MapPin, DollarSign, Search, Filter, ShoppingCart, Heart, Eye, Phone, Mail, Globe, User, FileText, Calendar, Hourglass } from 'lucide-react';
@@ -33,6 +34,7 @@ export default function ClientHome() {
   const [currentPage, setCurrentPage] = useState(1);
   const [showMap, setShowMap] = useState(false);
   const [invoiceOpen, setInvoiceOpen] = useState(false);
+  const [quoteOpen, setQuoteOpen] = useState(false);
   const pageSize = 10;
   const { toast } = useToast();
   const { isAdmin, user, profile } = useAuth();
@@ -212,7 +214,7 @@ export default function ClientHome() {
               </div>
               {!isAdmin && (
                 <Button asChild variant="secondary" className="ml-2">
-                  <Link to="/auth">تسجيل دخول الأدمن</Link>
+                  <Link to="/auth">تسجي�� دخول الأدمن</Link>
                 </Button>
               )}
               {isAdmin && (
@@ -330,7 +332,7 @@ export default function ClientHome() {
                   options={contracts.map(c => ({ label: c, value: c }))}
                   value={selectedContracts}
                   onChange={setSelectedContracts}
-                  placeholder={selectedClients.length ? "عقود العميل" : "أرقام العقود"}
+                  placeholder={selectedClients.length ? "عقود العميل" : "أرقام العق��د"}
                 />
               )}
 
@@ -409,14 +411,21 @@ export default function ClientHome() {
                 
                 {/* زر الاختيار */}
                 <div className="absolute bottom-4 right-4">
-                  <div className="flex items-center space-x-2 bg-white/90 backdrop-blur-sm rounded-lg p-2">
+                  <div
+                    className="flex items-center gap-2 bg-white/90 backdrop-blur-sm rounded-lg p-2 cursor-pointer"
+                    onClick={(e) => { e.stopPropagation(); toggleBillboardSelection(billboard.id || String(billboard.ID)); }}
+                  >
                     <Checkbox
-                      id={`billboard-${billboard.id}`}
-                      checked={selectedBillboards.includes(billboard.id)}
-                      onCheckedChange={() => toggleBillboardSelection(billboard.id)}
+                      id={`billboard-${billboard.id || billboard.ID}`}
+                      checked={selectedBillboards.includes(billboard.id || String(billboard.ID))}
+                      onCheckedChange={() => toggleBillboardSelection(billboard.id || String(billboard.ID))}
                       className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                     />
-                    <label htmlFor={`billboard-${billboard.id}`} className="text-sm font-medium">
+                    <label
+                      htmlFor={`billboard-${billboard.id || billboard.ID}`}
+                      className="text-sm font-medium cursor-pointer"
+                      onClick={(e) => { e.preventDefault(); toggleBillboardSelection(billboard.id || String(billboard.ID)); }}
+                    >
                       اختيار
                     </label>
                   </div>
@@ -698,6 +707,12 @@ export default function ClientHome() {
                     >
                       طباعة فاتورة
                     </Button>
+                    <Button
+                      onClick={() => setQuoteOpen(true)}
+                      className="bg-white text-primary hover:bg-white/90 font-semibold"
+                    >
+                      عرض سعر
+                    </Button>
                   </div>
                 </div>
               </CardContent>
@@ -708,6 +723,13 @@ export default function ClientHome() {
         <InvoiceDialog
           open={invoiceOpen}
           onOpenChange={setInvoiceOpen}
+          items={billboards.filter(b => selectedBillboards.includes(b.id))}
+          monthsById={packageById}
+          customerById={customerTypeById as any}
+        />
+        <QuoteDialog
+          open={quoteOpen}
+          onOpenChange={setQuoteOpen}
           items={billboards.filter(b => selectedBillboards.includes(b.id))}
           monthsById={packageById}
           customerById={customerTypeById as any}

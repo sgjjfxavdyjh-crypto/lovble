@@ -18,7 +18,7 @@ const Auth = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // بيانات تسجيل الدخول
+  // ب��انات تسجيل الدخول
   const [loginData, setLoginData] = useState<LoginCredentials>({
     email: '',
     password: ''
@@ -75,20 +75,6 @@ const Auth = () => {
     setIsLoading(false);
   };
 
-  // تعبئة تجريبية سريعة
-  const fillTestData = (type: 'admin' | 'user') => {
-    if (type === 'admin') {
-      setLoginData({
-        email: 'admin@test.com',
-        password: 'admin123'
-      });
-    } else {
-      setLoginData({
-        email: 'user@test.com',  
-        password: 'user123'
-      });
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gradient-dark flex items-center justify-center p-4" dir="rtl">
@@ -120,7 +106,7 @@ const Auth = () => {
           <TabsContent value="login">
             <Card>
               <CardHeader>
-                <CardTitle>تسجيل الدخول</CardTitle>
+                <CardTitle>ت��جيل الدخول</CardTitle>
                 <CardDescription>
                   أدخل بياناتك للوصول إلى حسابك
                 </CardDescription>
@@ -135,7 +121,7 @@ const Auth = () => {
                       value={loginData.email}
                       onChange={(e) => setLoginData(prev => ({ ...prev, email: e.target.value }))}
                       required
-                      placeholder="admin@test.com"
+                      placeholder="example@domain.com"
                     />
                   </div>
 
@@ -148,7 +134,7 @@ const Auth = () => {
                         value={loginData.password}
                         onChange={(e) => setLoginData(prev => ({ ...prev, password: e.target.value }))}
                         required
-                        placeholder="admin123"
+                        placeholder="كلمة المرور"
                       />
                       <Button
                         type="button"
@@ -172,30 +158,6 @@ const Auth = () => {
                     {isLoading ? 'جاري تسجيل الدخول...' : 'تسجيل الدخول'}
                   </Button>
 
-                  {/* أزرار الاختبار */}
-                  <div className="space-y-2 pt-4 border-t">
-                    <p className="text-sm text-muted-foreground text-center">للاختبار السريع:</p>
-                    <div className="flex gap-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => fillTestData('admin')}
-                        className="flex-1"
-                      >
-                        مدير
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => fillTestData('user')}
-                        className="flex-1"
-                      >
-                        مستخدم
-                      </Button>
-                    </div>
-                  </div>
                 </form>
               </CardContent>
             </Card>
@@ -205,7 +167,7 @@ const Auth = () => {
           <TabsContent value="register">
             <Card>
               <CardHeader>
-                <CardTitle>إنشاء حساب جديد</CardTitle>
+                <CardTitle>إنشاء حساب جدي��</CardTitle>
                 <CardDescription>
                   املأ البيانات لإنشاء حسابك الجديد
                 </CardDescription>

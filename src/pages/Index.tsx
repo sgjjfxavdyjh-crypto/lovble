@@ -298,10 +298,12 @@ const Index = () => {
                 </SelectContent>
               </Select>
 
-              <div className="flex items-center gap-2 px-3 py-2 border rounded-md">
-                <Switch id="my-only" checked={myOnly} onCheckedChange={setMyOnly} />
-                <Label htmlFor="my-only">لوحاتي</Label>
-              </div>
+              {user && (
+                <div className="flex items-center gap-2 px-3 py-2 border rounded-md">
+                  <Switch id="my-only" checked={myOnly} onCheckedChange={setMyOnly} />
+                  <Label htmlFor="my-only">لوحاتي</Label>
+                </div>
+              )}
 
               <Button variant="outline" className="gap-2">
                 <Filter className="h-4 w-4" />
@@ -325,7 +327,7 @@ const Index = () => {
         {filteredBillboards.length === 0 && (
           <div className="text-center py-12">
             <MapPin className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">لا توجد نتائج</h3>
+            <h3 className="text-lg font-semibold mb-2">لا تو��د نتائج</h3>
             <p className="text-muted-foreground">جرب تعديل معايير البحث أو الفلترة</p>
           </div>
         )}

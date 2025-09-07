@@ -2,7 +2,12 @@ import { Billboard } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { X, ShoppingCart, Calculator } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { X, ShoppingCart, Calculator, Printer } from 'lucide-react';
+import { CUSTOMERS, CustomerType, getPriceFor } from '@/data/pricing';
+import { useState } from 'react';
+import type { Billboard } from '@/types';
+import { buildMinimalOfferHtml } from '@/components/Invoice/printTemplates';
 
 interface BookingSummaryProps {
   selectedBillboards: Billboard[];
@@ -11,14 +16,48 @@ interface BookingSummaryProps {
   isOpen: boolean;
 }
 
-export function BookingSummary({ 
-  selectedBillboards, 
-  onRemoveBillboard, 
+function buildPrintHtml(items: Billboard[], months: number, customer: CustomerType) {
+  const rows = items.map((b, i) => {
+    const unit = getPriceFor((b as any).Size || (b as any).size, (b as any).Level || (b as any).level, customer, months) ?? 0;
+    const city = (b as any).City || (b as any).city || '';
+    const district = (b as any).District || (b as any).district || '';
+    const landmark = (b as any).Nearest_Landmark || (b as any).location || '';
+    return `<tr>
+      <td>${i + 1}</td>
+      <td>${b.Billboard_Name || b.id || b.ID}</td>
+      <td>${city}</td>
+      <td>${district}</td>
+      <td>${landmark}</td>
+      <td>${(b as any).Size || (b as any).size || ''}</td>
+      <td>${unit.toLocaleString('ar-LY')} د.ل</td>
+    </tr>`;
+  }).join('');
+  const grand = items.reduce((s,b)=> s + (getPriceFor((b as any).Size || (b as any).size, (b as any).Level || (b as any).level, customer, months) ?? 0), 0);
+  return `<!doctype html><html dir="rtl" lang="ar"><head><meta charset="utf-8"/><title>عرض سعر</title>
+  <style>body{font-family:'Cairo','Tajawal',system-ui,sans-serif;padding:16px;color:#111}table{width:100%;border-collapse:collapse}th,td{border:1px solid #eee;padding:8px;text-align:right}th{background:#faf6e8;font-weight:800}</style></head>
+  <body>
+    <h2>عرض سعر للوحات المختارة</h2>
+    <div>المدة: ${months === 12 ? 'سنة كاملة' : months + ' شهر'}</div>
+    <div>فئة العميل: ${customer}</div>
+    <table><thead><tr><th>#</th><th>اللوحة</th><th>المدينة</th><th>المنطقة</th><th>نقطة دالة</th><th>المقاس</th><th>السعر</th></tr></thead>
+      <tbody>${rows}</tbody>
+      <tfoot><tr><td colspan="6" style="text-align:left">الإجمالي</td><td>${grand.toLocaleString('ar-LY')} د.ل</td></tr></tfoot>
+    </table>
+    <script>window.onload=()=>window.print()</script>
+  </body></html>`;
+}
+
+export function BookingSummary({
+  selectedBillboards,
+  onRemoveBillboard,
   onSubmitBooking,
-  isOpen 
+  isOpen
 }: BookingSummaryProps) {
-  const totalCost = selectedBillboards.reduce((sum, billboard) => {
-    const price = parseFloat(billboard.Price) || 0;
+  const [months, setMonths] = useState<number>(1);
+  const [customer, setCustomer] = useState<CustomerType>(CUSTOMERS[0]);
+
+  const totalCost = selectedBillboards.reduce((sum, b) => {
+    const price = getPriceFor((b as any).Size || (b as any).size, (b as any).Level || (b as any).level, customer, months) ?? 0;
     return sum + price;
   }, 0);
 
@@ -62,21 +101,61 @@ export function BookingSummary({
       <Separator />
 
       <div className="p-4 space-y-3">
-        <div className="flex justify-between text-lg font-bold text-primary">
+        <div className="grid grid-cols-2 gap-2">
+          <Select value={String(months)} onValueChange={(v)=>setMonths(parseInt(v))}>
+            <SelectTrigger>
+              <SelectValue placeholder="المدة" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="1">شهر واحد</SelectItem>
+              <SelectItem value="2">شهران</SelectItem>
+              <SelectItem value="3">3 أشهر</SelectItem>
+              <SelectItem value="6">6 أشهر</SelectItem>
+              <SelectItem value="12">سنة كاملة</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={customer} onValueChange={(v)=>setCustomer(v as CustomerType)}>
+            <SelectTrigger>
+              <SelectValue placeholder="فئة العميل" />
+            </SelectTrigger>
+            <SelectContent>
+              {CUSTOMERS.map(c=> (
+                <SelectItem key={c} value={c}>{c}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="flex items-center justify-between text-lg font-bold text-primary">
           <span className="flex items-center gap-1">
             <Calculator className="h-4 w-4" />
             الإجمالي:
           </span>
-          <span>{totalCost.toLocaleString()} د.ل</span>
+          <span>{totalCost.toLocaleString('ar-LY')} د.ل</span>
         </div>
-        
-        <Button 
-          onClick={onSubmitBooking}
-          variant="hero"
-          className="w-full font-semibold"
-        >
-          إرسال طلب الحجز
-        </Button>
+
+        <div className="grid grid-cols-2 gap-2">
+          <Button
+            onClick={onSubmitBooking}
+            variant="hero"
+            className="w-full font-semibold"
+          >
+            إرسال طلب الحجز
+          </Button>
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={() => {
+              const win = window.open('', '_blank');
+              if (!win) return;
+              win.document.write(buildMinimalOfferHtml(selectedBillboards as any, { months, customer, logoUrl: 'https://cdn.builder.io/api/v1/image/assets%2Ffc68c2d70dd74affa9a5bbf7eee66f4a%2F684306a82024469997a03db98b279f4e?format=webp&width=256' }));
+              win.document.close();
+              try { win.focus(); win.print(); } catch { setTimeout(()=>{ try{ win.focus(); win.print(); } catch{} }, 300); }
+            }}
+          >
+            <Printer className="h-4 w-4 ml-2" /> طباعة
+          </Button>
+        </div>
       </div>
     </Card>
   );

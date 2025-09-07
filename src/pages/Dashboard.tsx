@@ -9,6 +9,7 @@ import { UsersTable } from '@/components/UsersTable';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
@@ -174,10 +175,15 @@ const Dashboard = () => {
               <p className="text-muted-foreground">إدارة اللوحات الإعلانية والعقود</p>
             </div>
           </div>
-          <Badge variant="outline" className="gap-2">
-            <Users className="h-4 w-4" />
-            مدير النظام
-          </Badge>
+          <div className="flex items-center gap-3">
+            <Button asChild variant="outline">
+              <Link to="/">العودة للصفحة الرئيسية</Link>
+            </Button>
+            <Badge variant="outline" className="gap-2">
+              <Users className="h-4 w-4" />
+              مدير النظام
+            </Badge>
+          </div>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
