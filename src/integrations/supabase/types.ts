@@ -21,18 +21,15 @@ export type Database = {
           Billboard_Name: string | null
           Category_Level: string | null
           City: string | null
-          contract_id: string | null
           Contract_Number: string | null
-          customer_name: string | null
           Customer_Name: string | null
           Days_Count: string | null
           District: string | null
-          end_date: string | null
           Faces_Count: string | null
           GPS_Coordinates: string | null
           GPS_Link: string | null
           GPS_Link_Click: string | null
-          ID: number | null
+          ID: number
           Image_URL: string | null
           Level: string | null
           Municipality: string | null
@@ -43,7 +40,6 @@ export type Database = {
           Rent_Start_Date: string | null
           Review: string | null
           Size: string | null
-          start_date: string | null
           Status: string | null
           "المقاس مع الدغاية": string | null
         }
@@ -53,18 +49,15 @@ export type Database = {
           Billboard_Name?: string | null
           Category_Level?: string | null
           City?: string | null
-          contract_id?: string | null
           Contract_Number?: string | null
-          customer_name?: string | null
           Customer_Name?: string | null
           Days_Count?: string | null
           District?: string | null
-          end_date?: string | null
           Faces_Count?: string | null
           GPS_Coordinates?: string | null
           GPS_Link?: string | null
           GPS_Link_Click?: string | null
-          ID?: number | null
+          ID: number
           Image_URL?: string | null
           Level?: string | null
           Municipality?: string | null
@@ -75,7 +68,6 @@ export type Database = {
           Rent_Start_Date?: string | null
           Review?: string | null
           Size?: string | null
-          start_date?: string | null
           Status?: string | null
           "المقاس مع الدغاية"?: string | null
         }
@@ -85,18 +77,15 @@ export type Database = {
           Billboard_Name?: string | null
           Category_Level?: string | null
           City?: string | null
-          contract_id?: string | null
           Contract_Number?: string | null
-          customer_name?: string | null
           Customer_Name?: string | null
           Days_Count?: string | null
           District?: string | null
-          end_date?: string | null
           Faces_Count?: string | null
           GPS_Coordinates?: string | null
           GPS_Link?: string | null
           GPS_Link_Click?: string | null
-          ID?: number | null
+          ID?: number
           Image_URL?: string | null
           Level?: string | null
           Municipality?: string | null
@@ -107,89 +96,83 @@ export type Database = {
           Rent_Start_Date?: string | null
           Review?: string | null
           Size?: string | null
-          start_date?: string | null
           Status?: string | null
           "المقاس مع الدغاية"?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "billboards_contract_id_fkey"
-            columns: ["contract_id"]
-            isOneToOne: false
-            referencedRelation: "contracts"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      bookings: {
-        Row: {
-          billboard_ids: string[]
-          created_at: string | null
-          end_date: string
-          id: string
-          notes: string | null
-          start_date: string
-          status: string | null
-          total_price: number
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          billboard_ids: string[]
-          created_at?: string | null
-          end_date: string
-          id?: string
-          notes?: string | null
-          start_date: string
-          status?: string | null
-          total_price: number
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          billboard_ids?: string[]
-          created_at?: string | null
-          end_date?: string
-          id?: string
-          notes?: string | null
-          start_date?: string
-          status?: string | null
-          total_price?: number
-          updated_at?: string | null
-          user_id?: string
-        }
         Relationships: []
       }
-      contracts: {
+      Contract: {
         Row: {
-          ad_type: string | null
-          created_at: string
-          customer_name: string
-          end_date: string
-          id: string
-          rent_cost: number
-          start_date: string
-          updated_at: string
+          "3% Fee": string | null
+          "Actual 3% Fee": string | null
+          "Ad Type": string | null
+          Company: string | null
+          "Contract Date": string | null
+          "Contract Number": string
+          "Customer Name": string | null
+          Discount: number | null
+          Duration: string | null
+          "End Date": string | null
+          "Installation Cost": number | null
+          Level: string | null
+          "Payment 1": string | null
+          "Payment 2": string | null
+          "Payment 3": string | null
+          Phone: string | null
+          "Print Status": string | null
+          Remaining: string | null
+          "Renewal Status": string | null
+          Total: string | null
+          "Total Paid": string | null
+          "Total Rent": number | null
         }
         Insert: {
-          ad_type?: string | null
-          created_at?: string
-          customer_name: string
-          end_date: string
-          id?: string
-          rent_cost?: number
-          start_date: string
-          updated_at?: string
+          "3% Fee"?: string | null
+          "Actual 3% Fee"?: string | null
+          "Ad Type"?: string | null
+          Company?: string | null
+          "Contract Date"?: string | null
+          "Contract Number": string
+          "Customer Name"?: string | null
+          Discount?: number | null
+          Duration?: string | null
+          "End Date"?: string | null
+          "Installation Cost"?: number | null
+          Level?: string | null
+          "Payment 1"?: string | null
+          "Payment 2"?: string | null
+          "Payment 3"?: string | null
+          Phone?: string | null
+          "Print Status"?: string | null
+          Remaining?: string | null
+          "Renewal Status"?: string | null
+          Total?: string | null
+          "Total Paid"?: string | null
+          "Total Rent"?: number | null
         }
         Update: {
-          ad_type?: string | null
-          created_at?: string
-          customer_name?: string
-          end_date?: string
-          id?: string
-          rent_cost?: number
-          start_date?: string
-          updated_at?: string
+          "3% Fee"?: string | null
+          "Actual 3% Fee"?: string | null
+          "Ad Type"?: string | null
+          Company?: string | null
+          "Contract Date"?: string | null
+          "Contract Number"?: string
+          "Customer Name"?: string | null
+          Discount?: number | null
+          Duration?: string | null
+          "End Date"?: string | null
+          "Installation Cost"?: number | null
+          Level?: string | null
+          "Payment 1"?: string | null
+          "Payment 2"?: string | null
+          "Payment 3"?: string | null
+          Phone?: string | null
+          "Print Status"?: string | null
+          Remaining?: string | null
+          "Renewal Status"?: string | null
+          Total?: string | null
+          "Total Paid"?: string | null
+          "Total Rent"?: number | null
         }
         Relationships: []
       }
@@ -203,7 +186,7 @@ export type Database = {
           Full_Year: number | null
           id: number | null
           One_Day: number | null
-          One_Month: string | null
+          One_Month: number | null
           size: string | null
         }
         Insert: {
@@ -215,7 +198,7 @@ export type Database = {
           Full_Year?: number | null
           id?: number | null
           One_Day?: number | null
-          One_Month?: string | null
+          One_Month?: number | null
           size?: string | null
         }
         Update: {
@@ -227,48 +210,42 @@ export type Database = {
           Full_Year?: number | null
           id?: number | null
           One_Day?: number | null
-          One_Month?: string | null
+          One_Month?: number | null
           size?: string | null
         }
         Relationships: []
       }
-      profiles: {
+      users: {
         Row: {
-          allowed_clients: Json | null
           company: string | null
           created_at: string | null
-          email: string | null
+          email: string
           id: string
           name: string | null
-          password: string | null
+          password: string
           phone: string | null
-          price_tier: string | null
           role: string | null
           updated_at: string | null
         }
         Insert: {
-          allowed_clients?: Json | null
           company?: string | null
           created_at?: string | null
-          email?: string | null
-          id: string
+          email: string
+          id?: string
           name?: string | null
-          password?: string | null
+          password: string
           phone?: string | null
-          price_tier?: string | null
           role?: string | null
           updated_at?: string | null
         }
         Update: {
-          allowed_clients?: Json | null
           company?: string | null
           created_at?: string | null
-          email?: string | null
+          email?: string
           id?: string
           name?: string | null
-          password?: string | null
+          password?: string
           phone?: string | null
-          price_tier?: string | null
           role?: string | null
           updated_at?: string | null
         }
@@ -279,14 +256,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      admin_set_profile_password: {
-        Args: { p_password: string; p_user_id: string }
-        Returns: undefined
-      }
-      auto_release_expired_billboards: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      [_ in never]: never
     }
     Enums: {
       [_ in never]: never
