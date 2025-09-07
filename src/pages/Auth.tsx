@@ -6,10 +6,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Megaphone, LogIn, UserPlus, Eye, EyeOff } from 'lucide-react';
+import { LogIn, UserPlus, Eye, EyeOff } from 'lucide-react';
 import { loginUser, registerUser, LoginCredentials, RegisterData } from '@/services/authService';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
+import { BRAND_NAME, BRAND_LOGO } from '@/lib/branding';
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -83,9 +84,9 @@ const Auth = () => {
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-3 mb-4">
             <div className="p-3 bg-gradient-primary rounded-xl">
-              <Megaphone className="h-8 w-8 text-primary-foreground" />
+              <img src={BRAND_LOGO} alt={BRAND_NAME} className="h-8 w-8 rounded-lg object-cover" />
             </div>
-            <h1 className="text-2xl font-bold text-foreground">اللوحات الإعلانية</h1>
+            <h1 className="text-2xl font-bold text-foreground">{BRAND_NAME}</h1>
           </div>
           <p className="text-muted-foreground">منصة حجز وإدارة اللوحات الإعلانية</p>
         </div>

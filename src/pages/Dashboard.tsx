@@ -13,12 +13,12 @@ import { Link } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Building, 
-  FileText, 
-  TrendingUp, 
-  AlertTriangle, 
-  Search, 
+import {
+  Building,
+  FileText,
+  TrendingUp,
+  AlertTriangle,
+  Search,
   Filter,
   BarChart3,
   Users,
@@ -26,6 +26,7 @@ import {
   Eye,
   Calendar
 } from 'lucide-react';
+import BookingRequestsTable from '@/components/BookingRequestsTable';
 import { toast } from '@/hooks/use-toast';
 
 interface DashboardStats {
@@ -187,7 +188,7 @@ const Dashboard = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="overview" className="gap-2">
               <BarChart3 className="h-4 w-4" />
               نظرة عامة
@@ -207,6 +208,10 @@ const Dashboard = () => {
             <TabsTrigger value="users" className="gap-2">
               <Users className="h-4 w-4" />
               المستخدمين
+            </TabsTrigger>
+            <TabsTrigger value="requests" className="gap-2">
+              <Calendar className="h-4 w-4" />
+              طلبات الحجز
             </TabsTrigger>
           </TabsList>
 
@@ -352,6 +357,11 @@ const Dashboard = () => {
           {/* المستخدمين */}
           <TabsContent value="users">
             <UsersTable />
+          </TabsContent>
+
+          {/* طلبات الحجز */}
+          <TabsContent value="requests">
+            <BookingRequestsTable />
           </TabsContent>
         </Tabs>
       </div>

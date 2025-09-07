@@ -456,7 +456,7 @@ export default function ClientHome() {
                           <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5">{(billboard as any).district}</span>
                         )}
                         {(billboard as any).municipality && (billboard as any).municipality !== 'غير محدد' && (
-                          <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5">البلدية: {(billboard as any).municipality}</span>
+                          <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5">{(billboard as any).municipality}</span>
                         )}
                       </div>
                     ) : null}

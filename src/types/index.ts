@@ -52,7 +52,8 @@ export interface Billboard {
 
 export interface Contract {
   id?: number;
-  'Contract Number': string;
+  Contract_Number?: string;
+  'Contract Number'?: string;
   'Customer Name': string;
   'Contract Date': string;
   Duration?: string;

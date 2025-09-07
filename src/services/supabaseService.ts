@@ -1,5 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 import { Billboard, Contract, Pricing } from '@/types';
+import { loadBillboards as loadBillboardsNormalized } from '@/services/billboardService';
 
 // جلب جميع اللوحات
 export const fetchAllBillboards = async (): Promise<Billboard[]> => {
@@ -8,27 +9,62 @@ export const fetchAllBillboards = async (): Promise<Billboard[]> => {
       .from('billboards')
       .select('*');
 
-    if (error) {
-      console.error('Error fetching billboards:', (error as any)?.message || JSON.stringify(error));
-      return [];
+    if (!error && Array.isArray(data) && data.length > 0) {
+      // إزالة التكرار وتحديد الحالة
+      const uniqueBillboards = new Map<number, any>();
+      (data || []).forEach((billboard: any) => {
+        if (!uniqueBillboards.has(billboard.ID)) {
+          uniqueBillboards.set(billboard.ID, {
+            ...billboard,
+            Status: billboard.Contract_Number ? 'مؤجر' : 'متاح'
+          });
+        }
+      });
+      const processedData = Array.from(uniqueBillboards.values());
+      console.log('Fetched unique billboards:', processedData.length);
+      return processedData as any;
     }
 
-    // إزالة التكرار وتحديد الحالة
-    const uniqueBillboards = new Map<number, any>();
-    (data || []).forEach((billboard: any) => {
-      if (!uniqueBillboards.has(billboard.ID)) {
-        uniqueBillboards.set(billboard.ID, {
-          ...billboard,
-          Status: billboard.Contract_Number ? 'مؤجر' : 'متاح'
-        });
-      }
-    });
-
-    const processedData = Array.from(uniqueBillboards.values());
-    console.log('Fetched unique billboards:', processedData.length);
-    return processedData;
+    console.warn('Supabase billboards unavailable, falling back. Details:', error?.message || 'no data');
   } catch (error) {
-    console.error('Error in fetchAllBillboards:', (error as any)?.message || JSON.stringify(error));
+    console.warn('Supabase fetchAllBillboards failed, will fallback:', (error as any)?.message || JSON.stringify(error));
+  }
+
+  // Fallback: use normalized loader (Google Sheets/local defaults), then map to legacy shape used by pages
+  try {
+    const normalized = await loadBillboardsNormalized();
+    const mapped: any[] = normalized.map((b, i) => ({
+      ID: Number(b.id) || i + 1,
+      Billboard_Name: b.name,
+      City: b.city || '',
+      District: (b as any).district || b.district || '',
+      Municipality: (b as any).municipality || b.municipality || '',
+      Size: (b as any).size || b.size || '',
+      Status: b.status === 'available' ? 'متاح' : b.status === 'rented' ? 'مؤجر' : 'صيانة',
+      Price: String((b as any).price ?? ''),
+      Level: (b as any).level ?? '',
+      Image_URL: (b as any).image ?? '',
+      GPS_Coordinates: typeof (b as any).coordinates === 'string' ? (b as any).coordinates : '',
+      GPS_Link: (b as any).coordinates ? (typeof (b as any).coordinates === 'string' ? `https://www.google.com/maps?q=${(b as any).coordinates}` : '') : '',
+      Nearest_Landmark: (b as any).location ?? '',
+      Faces_Count: (b as any).faces ?? '',
+      Contract_Number: (b as any).contractNumber ?? '',
+      Customer_Name: (b as any).clientName ?? '',
+      Rent_Start_Date: '',
+      Rent_End_Date: (b as any).expiryDate ?? '',
+      Days_Count: (b as any).remainingDays ?? '',
+      Review: '',
+      Category_Level: '',
+      Ad_Type: (b as any).adType ?? '',
+      Order_Size: undefined,
+      '@IMAGE': undefined,
+      GPS_Link_Click: undefined,
+      'المقاس مع الدغاية': undefined,
+    }));
+    console.log('Fallback mapped billboards:', mapped.length);
+    return mapped as any;
+  } catch (e) {
+    console.error('Fallback loaders failed, returning empty list:', (e as any)?.message || e);
     return [];
   }
 };
@@ -36,15 +72,26 @@ export const fetchAllBillboards = async (): Promise<Billboard[]> => {
 // جلب العقود مع دعم جدولين محتملين واستخراج أخطاء أوضح
 export const fetchContracts = async (): Promise<Contract[]> => {
   try {
-    // المحاولة 1: جدول Contract (قديم يحتوي أعمدة بأسماء بمسافات)
-    const { data, error } = await supabase
-      .from('Contract')
-      .select('*')
-      .order('"Contract Number"', { ascending: false });
+    // المحاولة 1: جدول Contract (يدعم Contract_Number أو "Contract Number")
+    let data: any[] | null = null; let error: any = null;
+    try {
+      const q1 = await supabase.from('Contract').select('*').order('Contract_Number', { ascending: false });
+      data = q1.data as any[] | null; error = q1.error;
+    } catch (e) { error = e; }
+    if (error || !Array.isArray(data)) {
+      const q2 = await supabase.from('Contract').select('*').order('"Contract Number"', { ascending: false });
+      data = q2.data as any[] | null; error = q2.error;
+    }
 
     if (!error && Array.isArray(data)) {
       console.log('Fetched contracts (Contract):', data.length);
-      return (data as any[]) as Contract[];
+      // normalize key
+      const normalized = (data as any[]).map((c: any) => ({
+        ...c,
+        Contract_Number: c.Contract_Number ?? c['Contract Number'] ?? c.id ?? c.ID,
+        'Contract Number': c['Contract Number'] ?? c.Contract_Number ?? c.id ?? c.ID,
+      })) as Contract[];
+      return normalized as any;
     }
 
     console.warn('Contract table not available or errored, falling back to contracts. Details:', error?.message || JSON.stringify(error));
@@ -61,7 +108,8 @@ export const fetchContracts = async (): Promise<Contract[]> => {
     }
 
     const mapped: Contract[] = (v2 || []).map((c: any) => ({
-      // id غير متاح بالصيغة الرقمية في الجدول الحديث
+      // id غير متاح بالصيغة الرقمية في ��لجدول الحديث
+      Contract_Number: String(c.id),
       'Contract Number': String(c.id),
       'Customer Name': c.customer_name ?? '',
       'Contract Date': c.start_date ?? c.created_at ?? '',

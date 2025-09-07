@@ -2,6 +2,7 @@ import * as UIDialog from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import type { Billboard } from '@/types';
 import { CUSTOMERS, CustomerType, getPriceFor } from '@/data/pricing';
+import { BRAND_LOGO, BRAND_NAME } from '@/lib/branding';
 import { addMonths, format as fmt } from 'date-fns';
 
 export type QuoteMeta = {
@@ -50,7 +51,7 @@ function buildQuoteHtml(props: Props) {
     date: props.meta?.date || new Date(),
     adType: props.meta?.adType || '—',
     clientName: props.meta?.clientName || '—',
-    clientRep: props.meta?.clientRep || '—',
+    clientRep: props.meta?.clientRep || '��',
     clientPhone: props.meta?.clientPhone || '—',
     companyName: props.meta?.companyName || 'شركة الفارس الذهبي للدعاية والإعلان',
     companyAddress: props.meta?.companyAddress || 'طرا��لس – طريق المطار، حي الزهور',
@@ -111,7 +112,7 @@ function buildQuoteHtml(props: Props) {
 </head><body>
   <div class="header">
     <div class="brand">
-      <img src="https://cdn.builder.io/api/v1/image/assets%2Ffc68c2d70dd74affa9a5bbf7eee66f4a%2F8d67e8499cfc4a8caf22e6c6835ab764?format=webp&width=256" alt="AL FARES" />
+      <img src="${BRAND_LOGO}" alt="${BRAND_NAME}" />
       <div>
         <h1>عقد استئجار مساحات إعلانية</h1>
         <div class="gold">${meta.companyName}</div>
@@ -128,7 +129,7 @@ function buildQuoteHtml(props: Props) {
   <div class="box terms">
     <p>نظراً لرغبة الطرف الثاني في استئجار مساحات إعلانية من الطرف الأول، تم الاتفاق على الشروط التالية:</p>
     <p>البند الأول: يلتزم الطرف الثاني بتجهيز التصميم في أسرع وقت وأي تأخير يعتبر مسؤوليته، وتبدأ مدة العقد من التاريخ المذكور في المادة السادسة.</p>
-    <p>البند الثاني: يلتزم الطرف الأول بطباعة وتركيب التصاميم بدقة على المساح��ت المتفق عليها وفق الجدول المرفق، ويتحمل الأخير تكاليف التغيير الناتجة عن الأحوال الجوية أو الحوادث.</p>
+    <p>البند ��لثاني: يلتزم الطرف الأول بطباعة وتركيب التصاميم بدقة على المساح��ت المتفق عليها وفق الجدول المرفق، ويتحمل الأخير تكاليف التغيير الناتجة عن الأحوال الجوية أو الحوادث.</p>
     <p>البند الثالث: في حال وقوع ظروف قاهرة تؤثر على إحدى المساحات، يتم نقل الإعلان إلى موقع بديل، ويتولى الطرف الأول الحصول على الموافقات اللازمة من الجهات ذات العلاقة.</p>
     <p>البند الرابع: لا يجوز للطرف الثاني التنازل عن العقد أو التعامل مع جهات أخرى دون موافقة الطرف الأول، الذي يحتفظ بحق استغلال المساحات في المناسبات الوطنية والانتخابات مع تعويض الطرف الثاني بفترة بديلة.</p>
     <p>البند الخامس: قيمة العرض الإجمالية: <strong>${formatCurrency(grand)}</strong>. تُدفع نصف القيمة عند توقيع العقد والنصف الآخر بعد التركيب، وإذا تأخر السداد عن 30 يوماً يحق للطرف الأول إعادة تأجير المساحات.</p>

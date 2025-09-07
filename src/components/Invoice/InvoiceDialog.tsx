@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button';
 import * as UIDialog from '@/components/ui/dialog';
+import { BRAND_LOGO, BRAND_NAME } from '@/lib/branding';
 import type { Billboard } from '@/types';
 import { CustomerType, CUSTOMERS, getPriceFor } from '@/data/pricing';
 
@@ -54,7 +55,7 @@ function buildInvoiceHtml(props: Props) {
   return `<!doctype html>
   <html lang="ar" dir="rtl"><head>
     <meta charset="utf-8" />
-    <title>فاتورة اللوحات</title>
+    <title>فاتورة - ${BRAND_NAME}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <style>
       body{font-family:'Cairo','Tajawal',system-ui,sans-serif;color:#111}
@@ -78,7 +79,7 @@ function buildInvoiceHtml(props: Props) {
         <div class="meta">التاريخ: ${new Date().toLocaleDateString('ar-LY')}</div>
       </div>
       <div class="brand" style="margin-bottom:8px">
-        <img class="brand-mark" src="https://cdn.builder.io/api/v1/image/assets%2Ffc68c2d70dd74affa9a5bbf7eee66f4a%2F8d67e8499cfc4a8caf22e6c6835ab764?format=webp&width=256" alt="شعار الفارس الذهبي" />
+        <img class="brand-mark" src="${BRAND_LOGO}" alt="${BRAND_NAME}" />
       </div>
       <table>
         <thead>

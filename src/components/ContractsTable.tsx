@@ -26,7 +26,7 @@ export const ContractsTable = () => {
     } catch (error) {
       toast({
         title: "خطأ في تحميل العقود",
-        description: "تعذر تحميل بيانات العقود",
+        description: "تعذر تحم��ل بيانات العقود",
         variant: "destructive"
       });
     } finally {
@@ -52,13 +52,19 @@ export const ContractsTable = () => {
     list.filter((contract) => {
       const searchOk =
         contract['Customer Name']?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        contract['Contract Number']?.toString().includes(searchTerm) ||
+        (contract.Contract_Number ?? contract['Contract Number'] ?? '').toString().includes(searchTerm) ||
         contract['Ad Type']?.toLowerCase().includes(searchTerm.toLowerCase());
-      const numberOk = !contractNumberFilter || contract['Contract Number']?.toString().includes(contractNumberFilter);
+      const numberOk = !contractNumberFilter || (contract.Contract_Number ?? contract['Contract Number'] ?? '').toString().includes(contractNumberFilter);
       return searchOk && numberOk;
     });
 
   const filteredContracts = bySearch(byPermissions(contracts));
+
+  // تقسيم إلى أقسام حسب عدد الأيام المتبقية
+  const enriched = filteredContracts.map((c) => ({ contract: c, daysLeft: computeDaysLeft(c) }));
+  const activeContracts = enriched.filter((x) => Number.isFinite(x.daysLeft) && x.daysLeft > 30);
+  const nearExpiryContracts = enriched.filter((x) => Number.isFinite(x.daysLeft) && x.daysLeft > 0 && x.daysLeft <= 30);
+  const expiredContracts = enriched.filter((x) => !Number.isFinite(x.daysLeft) ? false : x.daysLeft <= 0);
 
   const formatCurrency = (amount: number | string | null | undefined) => {
     if (amount === null || amount === undefined) return 'غير محدد';
@@ -76,12 +82,21 @@ export const ContractsTable = () => {
     }
   };
 
+  function computeDaysLeft(contract: Contract): number {
+    try {
+      const endDate = new Date(contract['End Date']);
+      const today = new Date();
+      const diff = Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+      return diff;
+    } catch {
+      return NaN;
+    }
+  }
+
   const getStatusBadge = (contract: Contract) => {
-    const endDate = new Date(contract['End Date']);
-    const today = new Date();
-    const daysLeft = Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-    
-    if (daysLeft < 0) {
+    const daysLeft = computeDaysLeft(contract);
+    if (!Number.isFinite(daysLeft)) return <Badge variant="secondary">غير محدد</Badge>;
+    if (daysLeft <= 0) {
       return <Badge variant="destructive">منتهي</Badge>;
     } else if (daysLeft <= 30) {
       return <Badge variant="outline" className="text-orange-600 border-orange-600">ينتهي قريباً</Badge>;
@@ -219,8 +234,11 @@ export const ContractsTable = () => {
         </CardContent>
       </Card>
 
-      {/* جدول العقود */}
+      {/* العقود السارية */}
       <Card>
+        <CardHeader>
+          <CardTitle>عقود سارية ({activeContracts.length})</CardTitle>
+        </CardHeader>
         <CardContent className="p-0">
           <Table>
             <TableHeader>
@@ -228,59 +246,41 @@ export const ContractsTable = () => {
                 <TableHead className="text-right">رقم العقد</TableHead>
                 <TableHead className="text-right">اسم العميل</TableHead>
                 <TableHead className="text-right">نوع الإعلان</TableHead>
-                <TableHead className="text-right">تاريخ البداية</TableHead>
                 <TableHead className="text-right">تاريخ الانتهاء</TableHead>
+                <TableHead className="text-right">متبقي</TableHead>
                 <TableHead className="text-right">القيمة الإجمالية</TableHead>
                 <TableHead className="text-right">الحالة</TableHead>
                 <TableHead className="text-right">الإجراءات</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredContracts.map((contract, index) => (
-                <TableRow key={`${contract['Contract Number'] ?? 'no-num'}-${index}`}>
-                  <TableCell className="font-medium">
-                    {contract['Contract Number']}
-                  </TableCell>
+              {activeContracts.map(({contract, daysLeft}, index) => (
+                <TableRow key={`${(contract.Contract_Number ?? contract['Contract Number'] ?? 'no-num')}-a-${index}`}>
+                  <TableCell className="font-medium">{contract.Contract_Number ?? contract['Contract Number']}</TableCell>
                   <TableCell>{contract['Customer Name']}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline">{contract['Ad Type']}</Badge>
-                  </TableCell>
-                  <TableCell>{formatDate(contract['Contract Date'])}</TableCell>
+                  <TableCell><Badge variant="outline">{contract['Ad Type']}</Badge></TableCell>
                   <TableCell>{formatDate(contract['End Date'])}</TableCell>
+                  <TableCell>{daysLeft} يوم</TableCell>
                   <TableCell>{formatCurrency(contract['Total Rent'])}</TableCell>
                   <TableCell>{getStatusBadge(contract)}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-destructive hover:text-destructive">
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <Button size="sm" variant="ghost" className="h-8 w-8 p-0"><Eye className="h-4 w-4" /></Button>
+                      <Button size="sm" variant="ghost" className="h-8 w-8 p-0"><Edit className="h-4 w-4" /></Button>
+                      <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-destructive hover:text-destructive"><Trash2 className="h-4 w-4" /></Button>
                     </div>
                   </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
-          
-          {filteredContracts.length === 0 && (
-            <div className="text-center py-12">
-              <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">لا توجد عقود</h3>
-              <p className="text-muted-foreground">
-                {contracts.length === 0 
-                  ? "لم يتم إنشاء أي عقود بعد"
-                  : "لا توجد عقود تطابق معايير البحث"
-                }
-              </p>
-            </div>
+          {activeContracts.length === 0 && (
+            <div className="text-center py-8 text-muted-foreground">لا توجد عقود سارية مطابقة</div>
           )}
         </CardContent>
       </Card>
+
+
     </div>
   );
 };

@@ -104,20 +104,14 @@ export const BillboardGridCard: React.FC<BillboardGridCardProps> = ({
 
           {/* الموقع */}
           <div className="space-y-2 mb-4">
-            {/* السطر 1: المدينة (الموقع) */}
-            {(billboard.City || billboard.Municipality) && (
+            {/* السطر 1: أقرب نقطة دالة (بدلاً من المدينة) */}
+            {(billboard.Nearest_Landmark || billboard.District || billboard.Municipality) && (
               <div className="flex items-center text-lg text-foreground font-semibold">
                 <MapPin className="h-4 w-4 mr-2 flex-shrink-0" />
-                <span className="truncate">{billboard.City || billboard.Municipality}</span>
+                <span className="truncate">{billboard.Nearest_Landmark || billboard.District || billboard.Municipality}</span>
               </div>
             )}
 
-            {/* السطر 2: أقرب نقطة دالة */}
-            {billboard.Nearest_Landmark && (
-              <div className="text-sm text-muted-foreground pr-6">
-                {billboard.Nearest_Landmark}
-              </div>
-            )}
 
             {/* السطر 3: المنطقة + البلدية */}
             {(billboard.District || billboard.Municipality) && (
@@ -126,24 +120,16 @@ export const BillboardGridCard: React.FC<BillboardGridCardProps> = ({
                   <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5">{billboard.District}</span>
                 )}
                 {billboard.Municipality && (
-                  <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5">البلدية: {billboard.Municipality}</span>
+                  <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5">{billboard.Municipality}</span>
                 )}
               </div>
             )}
           </div>
 
           {/* معلومات إضافية */}
-          <div className="grid grid-cols-2 gap-2 mb-4 text-sm">
-            <div>
-              <span className="text-muted-foreground">المستوى:</span>
-              <br />
-              <span className="font-medium">{billboard.Level || 'عادي'}</span>
-            </div>
-            <div>
-              <span className="text-muted-foreground">الأوجه:</span>
-              <br />
-              <span className="font-medium">{billboard.Faces_Count || '1'}</span>
-            </div>
+          <div className="mb-4 text-sm">
+            <span className="text-muted-foreground">عدد الأوجه:</span>{' '}
+            <span className="font-medium">{billboard.Faces_Count || '1'}</span>
           </div>
 
           {/* معلومات العقد - للمدير فقط */}
