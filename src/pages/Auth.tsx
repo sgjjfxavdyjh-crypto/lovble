@@ -19,7 +19,7 @@ const Auth = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // ب��انات تسجيل الدخول
+  // بيانات تسجيل الدخول
   const [loginData, setLoginData] = useState<LoginCredentials>({
     email: '',
     password: ''
@@ -76,7 +76,6 @@ const Auth = () => {
     setIsLoading(false);
   };
 
-
   return (
     <div className="min-h-screen bg-gradient-dark flex items-center justify-center p-4" dir="rtl">
       <div className="w-full max-w-md">
@@ -107,7 +106,7 @@ const Auth = () => {
           <TabsContent value="login">
             <Card>
               <CardHeader>
-                <CardTitle>ت��جيل الدخول</CardTitle>
+                <CardTitle>تسجيل الدخول</CardTitle>
                 <CardDescription>
                   أدخل بياناتك للوصول إلى حسابك
                 </CardDescription>
@@ -158,7 +157,6 @@ const Auth = () => {
                   <Button type="submit" className="w-full" disabled={isLoading}>
                     {isLoading ? 'جاري تسجيل الدخول...' : 'تسجيل الدخول'}
                   </Button>
-
                 </form>
               </CardContent>
             </Card>
@@ -168,7 +166,7 @@ const Auth = () => {
           <TabsContent value="register">
             <Card>
               <CardHeader>
-                <CardTitle>إنشاء حساب جدي��</CardTitle>
+                <CardTitle>إنشاء حساب جديد</CardTitle>
                 <CardDescription>
                   املأ البيانات لإنشاء حسابك الجديد
                 </CardDescription>

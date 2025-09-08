@@ -4,9 +4,12 @@ import { supabase } from '@/integrations/supabase/client';
 
 interface AuthContextType {
   user: User | null;
+  profile: User | null;
   isLoading: boolean;
+  loading: boolean;
   login: (user: User) => void;
   logout: () => void;
+  signOut: () => void;
   isAdmin: boolean;
 }
 
@@ -72,9 +75,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const value: AuthContextType = {
     user,
+    profile: user,
     isLoading,
+    loading: isLoading,
     login,
     logout,
+    signOut: logout,
     isAdmin
   };
 

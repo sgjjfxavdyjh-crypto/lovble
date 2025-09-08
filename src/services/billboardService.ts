@@ -226,6 +226,23 @@ function processBillboardFromSupabase(row: any, index: number): Billboard {
   const installationPrice = Math.round(price * 0.2);
 
   return {
+    // Legacy fields required by Billboard interface
+    ID: Number(id),
+    Billboard_Name: String(name),
+    City: String(city),
+    District: String(district || ''),
+    Size: size,
+    Status: normalizeStatus(row['Status']) || 'available',
+    Price: String(price),
+    Level: String(row['Level'] || 'standard'),
+    Image_URL: String(row['Image_URL'] || row['@IMAGE'] || ''),
+    GPS_Coordinates: String(coordinates || ''),
+    GPS_Link: gpsLink || '',
+    Nearest_Landmark: String(location),
+    Faces_Count: String(row['Faces_Count'] || '1'),
+    Municipality: String(municipality || ''),
+    
+    // App-level normalized fields
     id: String(id),
     name: String(name),
     location: String(location),
@@ -321,6 +338,23 @@ function processBillboardFromCSV(row: any, index: number): Billboard {
   const installationPrice = Math.round(price * 0.2); // 20% من سعر الإيجار
 
   return {
+    // Legacy fields required by Billboard interface
+    ID: Number(id),
+    Billboard_Name: name.toString(),
+    City: city.toString(),
+    District: location.toString(), // Use location as district fallback
+    Size: size,
+    Status: status,
+    Price: String(price),
+    Level: (level || 'standard').toString(),
+    Image_URL: '', // No image available for sample data
+    GPS_Coordinates: (coordinates || '').toString(),
+    GPS_Link: coordinates ? `https://www.google.com/maps?q=${coordinates}` : '',
+    Nearest_Landmark: location.toString(),
+    Faces_Count: '1',
+    Municipality: (municipality || '').toString(),
+    
+    // App-level normalized fields
     id: id.toString(),
     name: name.toString(),
     location: location.toString(),
@@ -455,7 +489,7 @@ export async function loadBillboards(): Promise<Billboard[]> {
         image: images[1],
         level: 'A'
       }
-    ];
+  ] as any[];
   }
 }
 

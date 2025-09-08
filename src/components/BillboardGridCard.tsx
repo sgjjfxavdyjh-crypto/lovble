@@ -21,7 +21,7 @@ export const BillboardGridCard: React.FC<BillboardGridCardProps> = ({
   showBookingActions = true
 }) => {
   const { isAdmin } = useAuth();
-  const isAvailable = billboard.Status === 'متاح' || billboard.Status === 'available' || !billboard.Contract_Number;
+  const isAvailable = billboard.Status === 'متا��' || billboard.Status === 'available' || !billboard.Contract_Number;
   const isMaintenance = billboard.Status === 'صيانة' || billboard.Status === 'maintenance';
   const statusLabel = isAvailable ? 'متاح' : isMaintenance ? 'صيانة' : 'محجوز';
   const statusClass = isAvailable
@@ -48,6 +48,11 @@ export const BillboardGridCard: React.FC<BillboardGridCardProps> = ({
 
   const daysRemaining = getDaysRemaining();
   const isNearExpiry = daysRemaining !== null && daysRemaining <= 20;
+
+  const contractNumber = String((billboard as any).Contract_Number ?? (billboard as any)['Contract Number'] ?? '').trim();
+  const endDate = (billboard as any).Rent_End_Date ?? (billboard as any)['End Date'] ?? '';
+  const customerName = (billboard as any).Customer_Name ?? (billboard as any)['Customer Name'] ?? '';
+  const adType = (billboard as any).Ad_Type ?? (billboard as any)['Ad Type'] ?? '';
 
   return (
     <Card className="overflow-hidden rounded-2xl bg-gradient-card border-0 shadow-card hover:shadow-luxury transition-smooth">
@@ -127,27 +132,35 @@ export const BillboardGridCard: React.FC<BillboardGridCardProps> = ({
           </div>
 
           {/* معلومات إضافية */}
-          <div className="mb-4 text-sm">
-            <span className="text-muted-foreground">عدد الأوجه:</span>{' '}
-            <span className="font-medium">{billboard.Faces_Count || '1'}</span>
+          <div className="mb-4 text-sm space-y-1">
+            <div>
+              <span className="text-muted-foreground">عدد الأوجه:</span>{' '}
+              <span className="font-medium">{billboard.Faces_Count || '1'}</span>
+            </div>
+            {adType && (
+              <div>
+                <span className="text-muted-foreground">نوع الإعلان:</span>{' '}
+                <span className="font-medium">{adType}</span>
+              </div>
+            )}
           </div>
 
-          {/* معلومات العقد - للمدير فقط */}
-          {isAdmin && !isAvailable && billboard.Customer_Name && (
-            <div className="mb-4 p-3 bg-muted/50 rounded-lg">
-              <div className="text-sm">
-                <div className="font-medium text-foreground mb-1">
-                  {billboard.Customer_Name}
-                </div>
-                {billboard.Rent_End_Date && (
-                  <div className="text-muted-foreground">
-                    ينتهي: {formatGregorianDate(billboard.Rent_End_Date, 'ar-LY')}
-                  </div>
+          {/* معلومات العقد (نمط موحّد للجميع) */}
+          {(contractNumber || endDate || customerName) && (
+            <div className="mb-4 text-xs text-muted-foreground">
+              <div className="flex flex-wrap gap-2">
+                {contractNumber && (
+                  <Badge variant="outline">رقم العقد: {contractNumber}</Badge>
+                )}
+                {endDate && (
+                  <Badge variant="secondary">ينتهي: {formatGregorianDate(endDate, 'ar-LY')}</Badge>
+                )}
+                {customerName && (
+                  <Badge variant="outline">{customerName}</Badge>
                 )}
               </div>
             </div>
           )}
-
 
           {/* أزرار الإجراءات */}
           {showBookingActions && (

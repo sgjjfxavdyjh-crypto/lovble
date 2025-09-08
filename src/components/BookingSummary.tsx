@@ -1,4 +1,3 @@
-import { Billboard } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -14,37 +13,6 @@ interface BookingSummaryProps {
   onRemoveBillboard: (billboardId: string) => void;
   onSubmitBooking: () => void;
   isOpen: boolean;
-}
-
-function buildPrintHtml(items: Billboard[], months: number, customer: CustomerType) {
-  const rows = items.map((b, i) => {
-    const unit = getPriceFor((b as any).Size || (b as any).size, (b as any).Level || (b as any).level, customer, months) ?? 0;
-    const city = (b as any).City || (b as any).city || '';
-    const district = (b as any).District || (b as any).district || '';
-    const landmark = (b as any).Nearest_Landmark || (b as any).location || '';
-    return `<tr>
-      <td>${i + 1}</td>
-      <td>${b.Billboard_Name || b.id || b.ID}</td>
-      <td>${city}</td>
-      <td>${district}</td>
-      <td>${landmark}</td>
-      <td>${(b as any).Size || (b as any).size || ''}</td>
-      <td>${unit.toLocaleString('ar-LY')} د.ل</td>
-    </tr>`;
-  }).join('');
-  const grand = items.reduce((s,b)=> s + (getPriceFor((b as any).Size || (b as any).size, (b as any).Level || (b as any).level, customer, months) ?? 0), 0);
-  return `<!doctype html><html dir="rtl" lang="ar"><head><meta charset="utf-8"/><title>عرض سعر</title>
-  <style>body{font-family:'Cairo','Tajawal',system-ui,sans-serif;padding:16px;color:#111}table{width:100%;border-collapse:collapse}th,td{border:1px solid #eee;padding:8px;text-align:right}th{background:#faf6e8;font-weight:800}</style></head>
-  <body>
-    <h2>عرض سعر للوحات المختارة</h2>
-    <div>المدة: ${months === 12 ? 'سنة كاملة' : months + ' شهر'}</div>
-    <div>فئة العميل: ${customer}</div>
-    <table><thead><tr><th>#</th><th>اللوحة</th><th>المدينة</th><th>المنطقة</th><th>نقطة دالة</th><th>المقاس</th><th>السعر</th></tr></thead>
-      <tbody>${rows}</tbody>
-      <tfoot><tr><td colspan="6" style="text-align:left">الإجمالي</td><td>${grand.toLocaleString('ar-LY')} د.ل</td></tr></tfoot>
-    </table>
-    <script>window.onload=()=>window.print()</script>
-  </body></html>`;
 }
 
 export function BookingSummary({

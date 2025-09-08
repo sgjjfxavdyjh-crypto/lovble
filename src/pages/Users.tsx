@@ -93,28 +93,35 @@ export default function Users() {
 
     // Fallback to direct query (may be limited by RLS)
     let resp = await supabase
-      .from('profiles')
-      .select('id,name,email,role,created_at,allowed_clients,price_tier', { count: 'exact' })
+      .from('users')
+      .select('id,name,email,role,created_at,allowed_customers,pricing_category', { count: 'exact' })
       .order('created_at', { ascending: false })
       .range(from, to);
 
     if (resp.error && (resp.error.code === '42703' || /does not exist/i.test(resp.error.message))) {
-      let probe = await supabase
-        .from('profiles')
+      // إذا فشل الاستعلام الأول، جرب استعلام أبسط
+      const simpleResp = await supabase
+        .from('users')
         .select('id,name,email,role,created_at', { count: 'exact' })
         .order('created_at', { ascending: false })
         .range(from, to);
-
-      if (probe.error && (probe.error.code === '42703' || /does not exist/i.test(probe.error.message))) {
-        setHasAssignedClient(false);
-        resp = await supabase
-          .from('profiles')
-          .select('id,name,email,role,created_at', { count: 'exact' })
-          .order('created_at', { ascending: false })
-          .range(from, to);
-      } else {
-        resp = probe;
+      
+      if (simpleResp.error) {
+        setError(simpleResp.error.message);
+        setRows([]);
+        setCount(0);
+        setLoading(false);
+        return;
       }
+      
+      const data = (simpleResp.data || []).map((d: any) => ({
+        ...d,
+        allowed_clients: null,
+        price_tier: null,
+      }));
+      setRows(data);
+      setCount(simpleResp.count || 0);
+      setHasAssignedClient(false);
       setHasPermissions(false);
     } else {
       setHasAssignedClient(true);
@@ -133,8 +140,8 @@ export default function Users() {
       };
       const data = (resp.data || []).map((d: any) => ({
         ...d,
-        allowed_clients: normalize(d.allowed_clients),
-        price_tier: d.price_tier ?? null,
+        allowed_clients: normalize(d.allowed_customers),
+        price_tier: d.pricing_category ?? null,
       }));
       setRows(data);
       setCount(resp.count || 0);
@@ -160,17 +167,17 @@ export default function Users() {
 
   const handleSave = async (row: ProfileRow) => {
     setSavingId(row.id);
-    let payload: any = { role: row.role, price_tier: row.price_tier ?? null, allowed_clients: row.allowed_clients ?? null };
+    let payload: any = { role: row.role, pricing_category: row.price_tier ?? null, allowed_customers: row.allowed_clients ?? null };
 
     let { error } = await supabase
-      .from('profiles')
+      .from('users')
       .update(payload)
       .eq('id', row.id);
 
     if (error && (error.code === '42703' || /does not exist/i.test(error.message))) {
       // retry without additional columns
       const retry = await supabase
-        .from('profiles')
+        .from('users')
         .update({ role: row.role })
         .eq('id', row.id);
       error = retry.error;

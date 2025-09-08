@@ -38,7 +38,7 @@ export default function ClientHome() {
   const pageSize = 10;
   const { toast } = useToast();
   const { isAdmin, user, profile } = useAuth();
-  const defaultCustomer = (profile?.price_tier as CustomerType) || CUSTOMERS[0];
+  const defaultCustomer = (profile?.pricingCategory as CustomerType) || CUSTOMERS[0];
 
   useEffect(() => {
     const fetchBillboards = async () => {

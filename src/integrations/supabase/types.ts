@@ -21,7 +21,7 @@ export type Database = {
           Billboard_Name: string | null
           Category_Level: string | null
           City: string | null
-          Contract_Number: string | null
+          Contract_Number: number | null
           Customer_Name: string | null
           Days_Count: string | null
           District: string | null
@@ -34,7 +34,7 @@ export type Database = {
           Level: string | null
           Municipality: string | null
           Nearest_Landmark: string | null
-          Order_Size: number | null
+          Order_Size: string | null
           Price: string | null
           Rent_End_Date: string | null
           Rent_Start_Date: string | null
@@ -49,7 +49,7 @@ export type Database = {
           Billboard_Name?: string | null
           Category_Level?: string | null
           City?: string | null
-          Contract_Number?: string | null
+          Contract_Number?: number | null
           Customer_Name?: string | null
           Days_Count?: string | null
           District?: string | null
@@ -62,7 +62,7 @@ export type Database = {
           Level?: string | null
           Municipality?: string | null
           Nearest_Landmark?: string | null
-          Order_Size?: number | null
+          Order_Size?: string | null
           Price?: string | null
           Rent_End_Date?: string | null
           Rent_Start_Date?: string | null
@@ -77,7 +77,7 @@ export type Database = {
           Billboard_Name?: string | null
           Category_Level?: string | null
           City?: string | null
-          Contract_Number?: string | null
+          Contract_Number?: number | null
           Customer_Name?: string | null
           Days_Count?: string | null
           District?: string | null
@@ -90,7 +90,7 @@ export type Database = {
           Level?: string | null
           Municipality?: string | null
           Nearest_Landmark?: string | null
-          Order_Size?: number | null
+          Order_Size?: string | null
           Price?: string | null
           Rent_End_Date?: string | null
           Rent_Start_Date?: string | null
@@ -108,7 +108,7 @@ export type Database = {
           "Ad Type": string | null
           Company: string | null
           "Contract Date": string | null
-          "Contract Number": string
+          Contract_Number: number
           "Customer Name": string | null
           Discount: number | null
           Duration: string | null
@@ -132,7 +132,7 @@ export type Database = {
           "Ad Type"?: string | null
           Company?: string | null
           "Contract Date"?: string | null
-          "Contract Number": string
+          Contract_Number: number
           "Customer Name"?: string | null
           Discount?: number | null
           Duration?: string | null
@@ -156,7 +156,7 @@ export type Database = {
           "Ad Type"?: string | null
           Company?: string | null
           "Contract Date"?: string | null
-          "Contract Number"?: string
+          Contract_Number?: number
           "Customer Name"?: string | null
           Discount?: number | null
           Duration?: string | null
@@ -217,6 +217,7 @@ export type Database = {
       }
       users: {
         Row: {
+          allowed_customers: string[] | null
           company: string | null
           created_at: string | null
           email: string
@@ -224,10 +225,12 @@ export type Database = {
           name: string | null
           password: string
           phone: string | null
+          pricing_category: string | null
           role: string | null
           updated_at: string | null
         }
         Insert: {
+          allowed_customers?: string[] | null
           company?: string | null
           created_at?: string | null
           email: string
@@ -235,10 +238,12 @@ export type Database = {
           name?: string | null
           password: string
           phone?: string | null
+          pricing_category?: string | null
           role?: string | null
           updated_at?: string | null
         }
         Update: {
+          allowed_customers?: string[] | null
           company?: string | null
           created_at?: string | null
           email?: string
@@ -246,6 +251,7 @@ export type Database = {
           name?: string | null
           password?: string
           phone?: string | null
+          pricing_category?: string | null
           role?: string | null
           updated_at?: string | null
         }

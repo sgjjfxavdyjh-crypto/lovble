@@ -43,11 +43,9 @@ export default function Contracts() {
 
   const loadData = async () => {
     try {
-      const [contractsData, billboardsData] = await Promise.all([
-        getContracts(),
-        getAvailableBillboards()
-      ]);
-      setContracts(contractsData);
+      const contractsData = await getContracts();
+      const billboardsData = await getAvailableBillboards();
+      setContracts(contractsData as any[]);
       setAvailableBillboards(billboardsData || []);
     } catch (error) {
       console.error('خطأ في تحميل البيانات:', error);
@@ -326,7 +324,7 @@ export default function Contracts() {
                 {contracts.map((contract) => (
                   <TableRow key={contract.id}>
                     <TableCell className="font-medium">{contract.customer_name}</TableCell>
-                    <TableCell>{contract.ad_type || '—'}</TableCell>
+                    <p>{contract['Ad Type'] || 'غير محدد'}</p>
                     <TableCell>{new Date(contract.start_date).toLocaleDateString('ar')}</TableCell>
                     <TableCell>{new Date(contract.end_date).toLocaleDateString('ar')}</TableCell>
                     <TableCell>{contract.rent_cost?.toLocaleString()} د.ل</TableCell>
@@ -336,14 +334,14 @@ export default function Contracts() {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => handleViewContract(contract.id)}
+                          onClick={() => handleViewContract(String(contract.id))}
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
                         <Button
                           size="sm"
                           variant="destructive"
-                          onClick={() => handleDeleteContract(contract.id)}
+                          onClick={() => handleDeleteContract(String(contract.id))}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>

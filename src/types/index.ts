@@ -1,10 +1,9 @@
 export interface Billboard {
-  // Supabase/legacy fields
+  // Supabase/legacy fields (required fields)
   ID: number;
   Billboard_Name: string;
   City: string;
   District: string;
-  Municipality?: string;
   Size: string;
   Status: string;
   Price: string;
@@ -14,6 +13,9 @@ export interface Billboard {
   GPS_Link: string;
   Nearest_Landmark: string;
   Faces_Count: string;
+  
+  // Optional Supabase fields
+  Municipality?: string;
   Contract_Number?: string;
   Customer_Name?: string;
   Rent_Start_Date?: string;
@@ -27,7 +29,7 @@ export interface Billboard {
   GPS_Link_Click?: string;
   'المقاس مع الدغاية'?: string;
 
-  // App-level normalized fields
+  // App-level normalized fields (all optional for compatibility)
   id?: string;
   name?: string;
   location?: string;
@@ -52,16 +54,16 @@ export interface Billboard {
 
 export interface Contract {
   id?: number;
-  Contract_Number?: string;
+  Contract_Number?: string | number;
   'Contract Number'?: string;
-  'Customer Name': string;
-  'Contract Date': string;
+  'Customer Name'?: string;
+  'Contract Date'?: string;
   Duration?: string;
-  'End Date': string;
-  'Ad Type': string;
-  'Total Rent': number;
-  'Installation Cost': number;
-  Total: string;
+  'End Date'?: string;
+  'Ad Type'?: string;
+  'Total Rent'?: number;
+  'Installation Cost'?: number;
+  Total?: string;
   'Payment 1'?: string;
   'Payment 2'?: string;
   'Payment 3'?: string;
@@ -75,6 +77,12 @@ export interface Contract {
   'Renewal Status'?: string;
   'Actual 3% Fee'?: string;
   '3% Fee'?: string;
+  // Database schema fields
+  customer_name?: string;
+  start_date?: string;
+  end_date?: string;
+  rent_cost?: number;
+  status?: string;
 }
 
 export interface Pricing {
@@ -105,7 +113,14 @@ export interface User {
   name: string;
   email: string;
   phone?: string;
-  role: 'customer' | 'admin';
+  role: 'customer' | 'admin' | 'user';
+  company?: string;
+  pricingCategory?: string | null;
+  allowedCustomers?: string[] | null;
+  price_tier?: string | null;
+  allowed_clients?: string[] | null;
+  pricing_category?: string | null;
+  allowed_customers?: string[] | null;
 }
 
 export interface PricingConfig {

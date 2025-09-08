@@ -62,7 +62,7 @@ const Dashboard = () => {
     } catch (error) {
       toast({
         title: "خطأ في تحميل البيانات",
-        description: "تعذر تحميل إحصائيات لوحة التحكم",
+        description: "تعذر تحميل إحصائي��ت لوحة التحكم",
         variant: "destructive"
       });
     } finally {
@@ -203,7 +203,7 @@ const Dashboard = () => {
             </TabsTrigger>
             <TabsTrigger value="pricing" className="gap-2">
               <DollarSign className="h-4 w-4" />
-              الأسعار
+              ��لأسعار
             </TabsTrigger>
             <TabsTrigger value="users" className="gap-2">
               <Users className="h-4 w-4" />

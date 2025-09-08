@@ -1,12 +1,11 @@
 import { useState, useEffect } from 'react';
-import { User } from '@/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Users, Search, Plus, Edit, Trash2, Shield, UserCheck, Mail, Phone, Save, Check } from 'lucide-react';
+import { Users, Search, Plus, Shield, UserCheck, Mail, Phone, Save, Check } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -61,7 +60,6 @@ export const UsersTable = () => {
 
   const loadCustomers = async () => {
     try {
-      // المحاولة 1: من الجدول القديم Contract
       const { data, error } = await supabase
         .from('Contract')
         .select('"Customer Name"');
@@ -73,20 +71,9 @@ export const UsersTable = () => {
         setCustomers(list);
         return;
       }
-
-      // المحاولة 2: من الج��ول الحديث contracts
-      const { data: v2, error: e2 } = await supabase
-        .from('contracts')
-        .select('customer_name');
-
-      if (e2) throw e2;
-
-      const list = Array.from(new Set(((v2 as any[]) ?? []).map((r: any) => r.customer_name).filter(Boolean))).sort(
-        (a, b) => String(a).localeCompare(String(b), 'ar')
-      ) as string[];
-      setCustomers(list);
     } catch (e: any) {
       console.error('loadCustomers error', e?.message || JSON.stringify(e));
+      setCustomers([]);
     }
   };
 
@@ -137,13 +124,16 @@ export const UsersTable = () => {
       const normalized = category === 'none' ? null : category;
       const { error } = await supabase
         .from('users')
-        .update({ pricing_category: normalized })
-        .eq('id', userId);
+        .update({ pricing_category: normalized } as any)
+        .eq('id', userId)
+        .select('*')
+        .single();
       if (error) throw error;
       setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, pricing_category: normalized } : u)));
       toast({ title: 'تم الحفظ', description: 'تم تحديث فئة الأسعار' });
-    } catch {
-      toast({ title: 'خطأ', description: 'تعذر تحديث فئة الأسعار', variant: 'destructive' });
+    } catch (e: any) {
+      console.error('pricing_category update error:', e?.message || e);
+      toast({ title: 'خطأ', description: `تعذر تحديث فئة الأسعار: ${e?.message || 'غير معروف'}` as any, variant: 'destructive' });
     }
   };
 
@@ -152,22 +142,27 @@ export const UsersTable = () => {
       const arr = allowedEdits[userId] ?? (users.find(u => u.id === userId)?.allowed_customers ?? []);
       const { error } = await supabase
         .from('users')
-        .update({ allowed_customers: arr })
-        .eq('id', userId);
+        .update({ allowed_customers: arr } as any)
+        .eq('id', userId)
+        .select('*')
+        .single();
       if (error) throw error;
       setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, allowed_customers: arr } : u)));
-      toast({ title: 'تم الحفظ', description: 'تم تحديث العملاء المسموح بهم' });
-    } catch {
-      toast({ title: 'خطأ', description: 'تعذر تحديث العملاء المسموح بهم', variant: 'destructive' });
+      toast({ title: 'تم الحفظ', description: 'تم تحديث العملاء المسمو�� بهم' });
+    } catch (e: any) {
+      console.error('allowed_customers update error:', e?.message || e);
+      toast({ title: 'خطأ', description: `تعذر تحديث العملاء المسموح بهم: ${e?.message || 'غير معروف'}` as any, variant: 'destructive' });
     }
   };
 
   const handleRoleChange = async (userId: string, newRole: string) => {
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('users')
         .update({ role: newRole })
-        .eq('id', userId);
+        .eq('id', userId)
+        .select('*')
+        .single();
 
       if (error) throw error;
 
@@ -179,10 +174,11 @@ export const UsersTable = () => {
         title: "تم تحديث الدور",
         description: "تم تحديث دور المستخدم بنجاح"
       });
-    } catch (error) {
+    } catch (error: any) {
+      console.error('role update error:', error?.message || error);
       toast({
         title: "خطأ في التحديث",
-        description: "تعذر تحديث دور المستخدم",
+        description: `تعذر تحديث دور المستخدم: ${error?.message || 'غير معروف'}` as any,
         variant: "destructive"
       });
     }
@@ -222,7 +218,7 @@ export const UsersTable = () => {
         </div>
       </div>
 
-      {/* إحصائيات س��يعة */}
+      {/* إحصائيات سريعة */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-4">
@@ -294,7 +290,7 @@ export const UsersTable = () => {
             <div className="relative">
               <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="ابحث عن المستخدمين..."
+                placeholder="ابحث عن ��لمستخدمين..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pr-10"
@@ -356,7 +352,21 @@ export const UsersTable = () => {
                     </div>
                   </TableCell>
                   <TableCell>{user.company || 'غير محدد'}</TableCell>
-                  <TableCell>{getRoleBadge(user.role)}</TableCell>
+                  <TableCell>
+                    <Select
+                      value={user.role}
+                      onValueChange={(value) => handleRoleChange(user.id, value)}
+                    >
+                      <SelectTrigger className="h-8 w-24">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="admin">مدير</SelectItem>
+                        <SelectItem value="user">مستخدم</SelectItem>
+                        <SelectItem value="customer">عميل</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </TableCell>
                   <TableCell>
                     <Select
                       value={user.pricing_category ?? 'none'}
@@ -427,44 +437,13 @@ export const UsersTable = () => {
                   <TableCell>{formatDate(user.created_at)}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <Select
-                        value={user.role}
-                        onValueChange={(value) => handleRoleChange(user.id, value)}
-                      >
-                        <SelectTrigger className="h-8 w-24">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="admin">مدير</SelectItem>
-                          <SelectItem value="user">مستخدم</SelectItem>
-                          <SelectItem value="customer">عميل</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-destructive hover:text-destructive">
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      {getRoleBadge(user.role)}
                     </div>
                   </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
-          
-          {filteredUsers.length === 0 && (
-            <div className="text-center py-12">
-              <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">لا توجد مستخدمين</h3>
-              <p className="text-muted-foreground">
-                {users.length === 0 
-                  ? "لم يتم تسجيل أي مستخدمين بعد"
-                  : "لا توجد مستخدمين يطابقون معايير البحث"
-                }
-              </p>
-            </div>
-          )}
         </CardContent>
       </Card>
     </div>

@@ -26,7 +26,7 @@ export const ContractsTable = () => {
     } catch (error) {
       toast({
         title: "خطأ في تحميل العقود",
-        description: "تعذر تحم��ل بيانات العقود",
+        description: "تعذر تحميل بيانات العقود",
         variant: "destructive"
       });
     } finally {
@@ -247,7 +247,7 @@ export const ContractsTable = () => {
                 <TableHead className="text-right">اسم العميل</TableHead>
                 <TableHead className="text-right">نوع الإعلان</TableHead>
                 <TableHead className="text-right">تاريخ الانتهاء</TableHead>
-                <TableHead className="text-right">متبقي</TableHead>
+                <TableHead className="text-right">مت��قي</TableHead>
                 <TableHead className="text-right">القيمة الإجمالية</TableHead>
                 <TableHead className="text-right">الحالة</TableHead>
                 <TableHead className="text-right">الإجراءات</TableHead>
@@ -259,9 +259,9 @@ export const ContractsTable = () => {
                   <TableCell className="font-medium">{contract.Contract_Number ?? contract['Contract Number']}</TableCell>
                   <TableCell>{contract['Customer Name']}</TableCell>
                   <TableCell><Badge variant="outline">{contract['Ad Type']}</Badge></TableCell>
-                  <TableCell>{formatDate(contract['End Date'])}</TableCell>
+                  <TableCell>{formatDate(contract['End Date'] as any)}</TableCell>
                   <TableCell>{daysLeft} يوم</TableCell>
-                  <TableCell>{formatCurrency(contract['Total Rent'])}</TableCell>
+                  <TableCell>{formatCurrency(contract['Total Rent'] as any)}</TableCell>
                   <TableCell>{getStatusBadge(contract)}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
@@ -279,7 +279,6 @@ export const ContractsTable = () => {
           )}
         </CardContent>
       </Card>
-
 
     </div>
   );

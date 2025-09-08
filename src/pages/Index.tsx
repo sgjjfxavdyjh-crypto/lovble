@@ -11,13 +11,15 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Search, Filter, MapPin, Star, Play, ArrowDown, LogOut, User, BarChart3 } from 'lucide-react';
+import { Search, Filter, MapPin, Star, Play, ArrowDown, LogOut, User, BarChart3, Check } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { addRequest } from '@/services/bookingService';
 import { getPriceFor, CUSTOMERS } from '@/data/pricing';
 import { useAuth } from '@/contexts/AuthContext';
 import heroBillboard from '@/assets/hero-billboard.jpg';
 import { BRAND_NAME, BRAND_LOGO } from '@/lib/branding';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 
 const Index = () => {
   const { user, logout, isAdmin } = useAuth();
@@ -28,6 +30,9 @@ const Index = () => {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [loading, setLoading] = useState(true);
   const [myOnly, setMyOnly] = useState(false);
+  const [selectedContractNumbers, setSelectedContractNumbers] = useState<string[]>([]);
+  const [municipalityFilter, setMunicipalityFilter] = useState<string>('all');
+  const [adTypeFilter, setAdTypeFilter] = useState<string>('all');
 
   useEffect(() => {
     loadBillboards();
@@ -40,7 +45,7 @@ const Index = () => {
     } catch (error) {
       toast({
         title: "خطأ في تحميل البيانات",
-        description: "تعذر تحميل اللوحا�� الإعلانية",
+        description: "تعذر تحميل اللوحات الإعلانية",
         variant: "destructive"
       });
     } finally {
@@ -53,6 +58,9 @@ const Index = () => {
                          billboard.District?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          billboard.City?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesSize = sizeFilter === 'all' || billboard.Size === sizeFilter;
+    const matchesMunicipality = municipalityFilter === 'all' || (billboard.Municipality ?? '') === municipalityFilter;
+    const adTypeVal = String((billboard as any).Ad_Type ?? (billboard as any)['Ad Type'] ?? '');
+    const matchesAdType = adTypeFilter === 'all' || adTypeVal === adTypeFilter;
 
     const isAvailable = billboard.Status === 'متاح' || billboard.Status === 'available' || !billboard.Contract_Number;
     const isBooked = billboard.Status === 'مؤجر' || billboard.Status === 'محجوز' || billboard.Status === 'booked' || !!billboard.Contract_Number;
@@ -72,8 +80,22 @@ const Index = () => {
       }
     }
 
+    const allowed = Array.isArray((user as any)?.allowedCustomers)
+      ? ((user as any).allowedCustomers as string[]).map((s) => String(s).trim().toLowerCase())
+      : [];
+    const customerName = String(billboard.Customer_Name ?? '').trim().toLowerCase();
+    const isAllowedBoard = allowed.length > 0 && allowed.includes(customerName);
+
     let finalStatusMatch = false;
     if (isAdmin) {
+      finalStatusMatch =
+        statusFilter === 'all' ||
+        (statusFilter === 'available' && isAvailable) ||
+        (statusFilter === 'booked' && isBooked) ||
+        (statusFilter === 'maintenance' && isMaintenance) ||
+        (statusFilter === 'near-expiry' && isNearExpiry);
+    } else if (myOnly && isAllowedBoard) {
+      // العميل يستطيع رؤية لوحاته حتى لو كانت محجوزة/صيانة
       finalStatusMatch =
         statusFilter === 'all' ||
         (statusFilter === 'available' && isAvailable) ||
@@ -88,18 +110,17 @@ const Index = () => {
       } else if (statusFilter === 'all') {
         finalStatusMatch = isAvailable || isNearExpiry;
       } else {
-        // non-admins cannot view booked/maintenance
         finalStatusMatch = false;
       }
     }
 
-    const allowed = Array.isArray((user as any)?.allowedCustomers)
-      ? ((user as any).allowedCustomers as string[]).map((s) => String(s).trim().toLowerCase())
-      : [];
-    const customerName = String(billboard.Customer_Name ?? '').trim().toLowerCase();
-    const matchesMyOnly = !myOnly || (allowed.length > 0 && allowed.includes(customerName));
+    const boardContract = String((billboard as any).Contract_Number ?? (billboard as any)['Contract Number'] ?? '').trim();
+    const appliesContractFilter = isAdmin ? selectedContractNumbers.length > 0 : (myOnly && selectedContractNumbers.length > 0);
+    const matchesContract = !appliesContractFilter || (boardContract && selectedContractNumbers.includes(boardContract));
 
-    return matchesSearch && matchesSize && finalStatusMatch && matchesMyOnly;
+    const matchesMyOnly = !myOnly || isAllowedBoard;
+
+    return matchesSearch && matchesSize && matchesMunicipality && matchesAdType && finalStatusMatch && matchesMyOnly && matchesContract;
   });
 
   const handleToggleSelect = (billboard: Billboard) => {
@@ -133,13 +154,30 @@ const Index = () => {
     b.Status === 'متاح' || b.Status === 'available' || !b.Contract_Number
   ).length;
   const uniqueSizes = [...new Set(billboards.map(b => b.Size))].filter(Boolean);
+  const uniqueMunicipalities = [...new Set(billboards.map(b => b.Municipality).filter(Boolean))] as string[];
+  const uniqueAdTypes = [...new Set(billboards.map((b:any) => (b.Ad_Type ?? b['Ad Type'] ?? '')).filter(Boolean))] as string[];
+
+  const allowedList = Array.isArray((user as any)?.allowedCustomers)
+    ? ((user as any).allowedCustomers as string[]).map((s) => String(s).trim().toLowerCase())
+    : [];
+  const sourceBillboards = isAdmin
+    ? billboards
+    : myOnly
+    ? billboards.filter((b) => allowedList.includes(String((b as any).Customer_Name ?? '').trim().toLowerCase()))
+    : [];
+  const contractNumbers = Array.from(new Set(
+    sourceBillboards
+      .map((b) => (b as any).Contract_Number ?? (b as any)['Contract Number'] ?? '')
+      .filter((v) => !!v)
+      .map((v) => String(v))
+  ));
 
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-dark flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-foreground">جاري تحميل اللوحات الإعلانية...</p>
+          <p className="text-foreground">جاري تحم��ل اللوحات الإعلانية...</p>
         </div>
       </div>
     );
@@ -172,7 +210,7 @@ const Index = () => {
           </h1>
           
           <p className="text-xl md:text-2xl text-gray-200 mb-8 leading-relaxed">
-            منصة متكاملة لحجز وإدارة اللوحات الإعلانية الطرقية
+            منصة متكاملة لحجز وإدارة اللوحات الإعلانية الطرقي��
             <br />
             بأسعار تنافسية وخدمة مميزة على مدار الساعة
           </p>
@@ -218,7 +256,7 @@ const Index = () => {
               </div>
               <div>
                 <h2 className="text-xl font-bold text-foreground">{BRAND_NAME}</h2>
-                <p className="text-sm text-muted-foreground">اختر من بين أفضل المواقع الإعلانية</p>
+                <p className="text-sm text-muted-foreground">اختر من بين أفضل المواقع الإعلاني��</p>
               </div>
             </div>
             <div className="flex items-center gap-4">
@@ -303,11 +341,79 @@ const Index = () => {
                 </SelectContent>
               </Select>
 
+              <Select value={municipalityFilter} onValueChange={setMunicipalityFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="البلدية" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">جميع البلديات</SelectItem>
+                  {uniqueMunicipalities.map((m) => (
+                    <SelectItem key={m} value={m}>{m}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="gap-2">
+                    {adTypeFilter === 'all' ? 'نوع الإعلان (الكل)' : `نوع الإعلان: ${adTypeFilter}`}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-72 p-0" align="start">
+                  <Command>
+                    <CommandInput placeholder="ابحث عن نوع الإعلان..." />
+                    <CommandList>
+                      <CommandEmpty>لا يوجد نتائج</CommandEmpty>
+                      <CommandGroup>
+                        <CommandItem onSelect={() => setAdTypeFilter('all')}>الكل</CommandItem>
+                        {uniqueAdTypes.map((t) => (
+                          <CommandItem key={t} onSelect={() => setAdTypeFilter(t)}>{t}</CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+
               {user && (
                 <div className="flex items-center gap-2 px-3 py-2 border rounded-md">
                   <Switch id="my-only" checked={myOnly} onCheckedChange={setMyOnly} />
                   <Label htmlFor="my-only">لوحاتي</Label>
                 </div>
+              )}
+
+              {(isAdmin || myOnly) && contractNumbers.length > 0 && (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="gap-2">
+                      أرقام العقود {selectedContractNumbers.length > 0 ? `(${selectedContractNumbers.length})` : ''}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-72 p-0" align="start">
+                    <Command>
+                      <CommandInput placeholder="ابحث عن رقم عقد..." />
+                      <CommandList>
+                        <CommandEmpty>لا يوجد نتائج</CommandEmpty>
+                        <CommandGroup>
+                          {contractNumbers.map((num) => {
+                            const selected = selectedContractNumbers.includes(num);
+                            return (
+                              <CommandItem
+                                key={num}
+                                onSelect={() => {
+                                  setSelectedContractNumbers((prev) => selected ? prev.filter((n) => n !== num) : [...prev, num]);
+                                }}
+                              >
+                                <Check className={`mr-2 h-4 w-4 ${selected ? 'opacity-100' : 'opacity-0'}`} />
+                                {num}
+                              </CommandItem>
+                            );
+                          })}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               )}
 
               <Button variant="outline" className="gap-2">
@@ -332,7 +438,7 @@ const Index = () => {
         {filteredBillboards.length === 0 && (
           <div className="text-center py-12">
             <MapPin className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">لا تو��د نتائج</h3>
+            <h3 className="text-lg font-semibold mb-2">لا توجد نتائج</h3>
             <p className="text-muted-foreground">جرب تعديل معايير البحث أو الفلترة</p>
           </div>
         )}

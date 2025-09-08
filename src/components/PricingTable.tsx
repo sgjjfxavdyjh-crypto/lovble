@@ -102,19 +102,49 @@ export const PricingTable = () => {
         ['6_Months']: (editValues as any)['6_Months'] ?? null,
         Full_Year: editValues.Full_Year ?? null,
       } as any;
-      const { data, error } = await supabase
+      // محاولة أساسية بالتحديث عبر المعرف
+      let { data, error } = await supabase
         .from('pricing')
         .update(payload)
         .eq('id', editingId)
-        .select()
-        .single();
+        .select();
       if (error) throw error;
 
-      setPricing((prev) => prev.map((p) => (p.id === editingId ? { ...p, ...data } : p)));
+      let updated = Array.isArray(data) ? data[0] : data;
+
+      // إن لم يُرجع صفًا، نجرب بالتطابق عبر مفاتيح مركبة (الحجم + المستوى + الفئة)
+      if (!updated) {
+        const row = pricing.find((p) => p.id === editingId);
+        if (!row) throw new Error('لم يتم العثور على السجل محليًا');
+        const res2 = await supabase
+          .from('pricing')
+          .update(payload)
+          .eq('size', row.size)
+          .eq('Billboard_Level', row.Billboard_Level)
+          .eq('Customer_Category', row.Customer_Category)
+          .select();
+        if (res2.error) throw res2.error;
+        updated = Array.isArray(res2.data) ? res2.data[0] : (res2.data as any);
+      }
+
+      // كحل أخير: upsert على id
+      if (!updated) {
+        const res3 = await supabase
+          .from('pricing')
+          .upsert([{ id: editingId, ...(payload as any) }], { onConflict: 'id', ignoreDuplicates: false })
+          .select();
+        if (res3.error) throw res3.error;
+        updated = Array.isArray(res3.data) ? res3.data[0] : (res3.data as any);
+      }
+
+      if (!updated) throw new Error('لم يتم العثور على السجل بعد التحديث');
+
+      setPricing((prev) => prev.map((p) => (p.id === editingId ? { ...p, ...updated } : p)));
       toast({ title: 'تم الحفظ', description: 'تم تحديث الأسعار بنجاح' });
       cancelEdit();
-    } catch (e) {
-      toast({ title: 'فشل الحفظ', description: 'تعذر تحديث الأسعار', variant: 'destructive' });
+    } catch (e: any) {
+      console.error('pricing update error:', e?.message || e);
+      toast({ title: 'فشل الحفظ', description: `تعذر تحديث الأسعار: ${e?.message || 'غير معروف'}` as any, variant: 'destructive' });
     } finally {
       setSaving(false);
     }
