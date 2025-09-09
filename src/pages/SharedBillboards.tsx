@@ -52,7 +52,31 @@ export default function SharedBillboards() {
       if (split.newCap !== undefined) payload.capital_remaining = split.newCap;
       const { error } = await supabase.from('billboards').update(payload).eq('id', bb.id);
       if (error) throw error;
-      // Optionally you could insert transaction records to ledger table here
+
+      // Insert transactions into shared_transactions table
+      try {
+        // Our company transaction
+        await supabase.from('shared_transactions').insert({ billboard_id: bb.id, beneficiary: 'our_company', amount: Number(split.company || 0), type: 'rental_income' });
+
+        // Partner transactions: split among partner companies if multiple
+        const partners = Array.isArray(bb.partner_companies) ? bb.partner_companies : (bb.partner_companies ? String(bb.partner_companies).split(',').map((s:any)=>s.trim()).filter(Boolean) : []);
+        if (partners.length > 0) {
+          const perPartner = Number(split.partner || 0) / partners.length;
+          const inserts = partners.map((p:any) => ({ billboard_id: bb.id, beneficiary: p, amount: perPartner, type: 'rental_income' }));
+          await supabase.from('shared_transactions').insert(inserts as any[]);
+        } else {
+          // If no partner listed, still record a generic partner transaction
+          await supabase.from('shared_transactions').insert({ billboard_id: bb.id, beneficiary: 'partner', amount: Number(split.partner || 0), type: 'rental_income' });
+        }
+
+        // Record capital deduction as transaction
+        if (Number(split.deduct || 0) > 0) {
+          await supabase.from('shared_transactions').insert({ billboard_id: bb.id, beneficiary: 'capital', amount: Number(split.deduct || 0), type: 'capital_deduction' });
+        }
+      } catch (txErr) {
+        console.warn('failed to insert shared transactions', txErr);
+      }
+
       toast.success(`تطبيق الإيجار. الشركة: ${split.company.toLocaleString()} د.ل، الشريك: ${split.partner.toLocaleString()} د.ل، خصم من رأس المال: ${split.deduct.toLocaleString()} د.ل`);
       load();
     } catch (e:any) {
