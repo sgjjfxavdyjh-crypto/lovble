@@ -14,10 +14,10 @@ export default defineConfig(({ mode }) => ({
     exclude: ["pdf-lib"]
   },
   resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "./src"),
-      // Use ESM build of pako to avoid default export issues
-      "pako": path.resolve(__dirname, "./src/libs/pako-shim.ts"),
-    },
+    alias: [
+      { find: '@', replacement: path.resolve(__dirname, './src') },
+      // Exact match for 'pako' only (avoid matching 'pako/dist/...')
+      { find: /^pako$/, replacement: path.resolve(__dirname, './src/libs/pako-shim.ts') },
+    ],
   },
 }));
