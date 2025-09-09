@@ -180,12 +180,15 @@ export default function Billboards() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-foreground">إدارة اللوحات الإعلانية</h1>
-          <p className="text-muted-foreground">عرض وإدارة جميع اللوحات الإعلانية مع إمكانية التعديل والصيا��ة</p>
+          <p className="text-muted-foreground">عرض وإدارة جميع اللوحات الإعلانية مع إمكانية التعديل والصيانة</p>
         </div>
-        <Button className="bg-gradient-primary text-white shadow-elegant hover:shadow-glow transition-smooth">
-          <Plus className="h-4 w-4 ml-2" />
-          إضافة معلن
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={() => setAddOpen(true)} className="bg-gradient-primary text-white shadow-elegant hover:shadow-glow transition-smooth">
+            <Plus className="h-4 w-4 ml-2" />
+            إضافة لوحة
+          </Button>
+          <Button variant="outline" onClick={() => navigate('/admin/shared-billboards')}>اللوحات المشتركة</Button>
+        </div>
       </div>
 
       {/* أدوات التصفية والبحث */}
@@ -384,7 +387,7 @@ export default function Billboards() {
               </datalist>
             </div>
             <div>
-              <Label>المقاس</Label>
+              <Label>ال��قاس</Label>
               <Select value={editForm.Size || ''} onValueChange={(v) => setEditForm((p: any) => ({ ...p, Size: v }))}>
                 <SelectTrigger><SelectValue placeholder="اختر المقاس" /></SelectTrigger>
                 <SelectContent>
