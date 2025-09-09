@@ -103,8 +103,8 @@ export default function Customers() {
 
   const totalAllPaid = payments.reduce((s, p) => s + (Number(p.amount) || 0), 0);
 
-  const openCustomer = (name: string) => {
-    setSelectedCustomer(name);
+  const openCustomer = (id: string) => {
+    setSelectedCustomer(id);
     setDialogOpen(true);
   };
 
@@ -115,13 +115,22 @@ export default function Customers() {
 
   const customerContracts = useMemo(() => {
     if (!selectedCustomer) return [] as ContractRow[];
-    return contracts.filter(c => (c['Customer Name'] || '').toString() === selectedCustomer);
+    return contracts.filter(c => {
+      const cid = (c as any).customer_id ?? null;
+      if (cid) return String(cid) === selectedCustomer;
+      return ((c['Customer Name'] || '').toString()) === selectedCustomer || (`name:${(c['Customer Name']||'').toString()}`) === selectedCustomer;
+    });
   }, [selectedCustomer, contracts]);
 
   const customerPayments = useMemo(() => {
     if (!selectedCustomer) return [] as PaymentRow[];
-    return payments.filter(p => (p.customer_name || '').toString() === selectedCustomer).sort((a,b)=> (b.paid_at||'').localeCompare(a.paid_at||''));
-  }, [selectedCustomer, payments]);
+    return payments.filter(p => {
+      const cid = (p.customer_id || null) as string | null;
+      if (cid) return String(cid) === selectedCustomer;
+      // fallback to name-key
+      return (`name:${(p.customer_name||'').toString()}`) === selectedCustomer || (p.customer_name && p.customer_name === (customers.find(x=>x.id===selectedCustomer)?.name));
+    }).sort((a,b)=> (b.paid_at||'').localeCompare(a.paid_at||''));
+  }, [selectedCustomer, payments, customers]);
 
   const printReceipt = (payment: PaymentRow) => {
     const html = `
