@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { toast } from '@/components/ui/sonner';
 import { Plus, Eye, Edit, Trash2, Calendar, User, DollarSign, Search, Filter, Building, AlertCircle, Clock, CheckCircle } from 'lucide-react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
   createContract,
   getContracts,
@@ -202,7 +202,7 @@ export default function Contracts() {
     return matchesSearch && matchesCustomer && matchesStatus;
   });
 
-  // تقسيم العقود حسب الحالة
+  // تقسيم العقود حسب الحال��
   const contractStats = {
     total: contracts.length,
     active: contracts.filter(c => {
@@ -645,7 +645,7 @@ export default function Contracts() {
                   <CardHeader>
                     <CardTitle className="text-lg flex items-center gap-2">
                       <User className="h-5 w-5" />
-                      معلوما�� الزبون
+                      معلومات الزبون
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
