@@ -8,6 +8,7 @@ const sidebarItems = [
   { id: 'dashboard', label: 'الرئيسية', icon: Home, path: '/admin' },
   { id: 'billboards', label: 'إدارة اللوحات', icon: MapPin, path: '/admin/billboards' },
   { id: 'booking_requests', label: 'طلبات الحجز', icon: FileText, path: '/admin/booking-requests' },
+  { id: 'shared_billboards', label: 'اللوحات المشتركة', icon: FileText, path: '/admin/shared-billboards' },
   { id: 'customers', label: 'الزبائن', icon: Users, path: '/admin/customers' },
   { id: 'users', label: 'المستخدمين', icon: Users, path: '/admin/users' },
   { id: 'pricing', label: 'أسعار الإيجار', icon: DollarSign, path: '/admin/pricing' },
