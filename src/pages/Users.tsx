@@ -14,6 +14,7 @@ import { supabase } from '@/integrations/supabase/client';
 import MultiSelect from '@/components/ui/multi-select';
 import { CUSTOMERS } from '@/data/pricing';
 import { loadBillboards } from '@/services/billboardService';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Permissions {
   can_view_unavailable?: boolean;
