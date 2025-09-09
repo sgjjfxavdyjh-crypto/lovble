@@ -63,11 +63,9 @@ export default function ContractCreate() {
   useEffect(() => {
     (async () => {
       try {
-        const { data, error } = await supabase.from('Contract').select('"Customer Name"');
+        const { data, error } = await supabase.from('customers').select('id,name').order('name', { ascending: true });
         if (!error && Array.isArray(data)) {
-          const list = Array.from(new Set(((data as any[]) ?? []).map((r: any) => r['Customer Name']).filter(Boolean)));
-          list.sort((a, b) => String(a).localeCompare(String(b), 'ar'));
-          setCustomers(list as string[]);
+          setCustomers((data as any) || []);
         }
       } catch (e) {
         console.warn('load customers failed');
