@@ -38,7 +38,12 @@ export default function Contracts() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [customerFilter, setCustomerFilter] = useState<string>('all');
-  
+
+  const [customersList, setCustomersList] = useState<{id:string; name:string}[]>([]);
+  const [assignOpen, setAssignOpen] = useState(false);
+  const [assignContractNumber, setAssignContractNumber] = useState<string | null>(null);
+  const [assignCustomerId, setAssignCustomerId] = useState<string | null>(null);
+
   const [formData, setFormData] = useState<ContractCreate>({
     customer_name: '',
     ad_type: '',
@@ -306,7 +311,7 @@ export default function Contracts() {
                         />
                       </div>
                       <div>
-                        <Label>ن��ع الإعلان</Label>
+                        <Label>نوع الإعلان</Label>
                         <Input
                           value={formData.ad_type}
                           onChange={(e) => setFormData({ ...formData, ad_type: e.target.value })}
@@ -352,7 +357,7 @@ export default function Contracts() {
                   </Card>
                 </div>
 
-                {/* العمود ال��يمن: اللوحات */}
+                {/* العمود الأيمن: اللوحات */}
                 <div className="md:col-span-2 space-y-4">
                   <Card className="border">
                     <CardHeader>
@@ -669,7 +674,7 @@ export default function Contracts() {
                     <div className="space-y-2">
                       <p><strong>تاريخ البداية:</strong> {selectedContract.start_date ? new Date(selectedContract.start_date).toLocaleDateString('ar') : '—'}</p>
                       <p><strong>��اريخ النهاية:</strong> {selectedContract.end_date ? new Date(selectedContract.end_date).toLocaleDateString('ar') : '—'}</p>
-                      <p><strong>التكلفة الإجمالية:</strong> {(selectedContract.rent_cost || 0).toLocaleString()} د.ل</p>
+                      <p><strong>ا��تكلفة الإجمالية:</strong> {(selectedContract.rent_cost || 0).toLocaleString()} د.ل</p>
                     </div>
                   </CardContent>
                 </Card>
