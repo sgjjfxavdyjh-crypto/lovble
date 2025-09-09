@@ -336,6 +336,54 @@ export default function Users() {
           )}
         </CardContent>
       </Card>
+
+      {/* Password change modal for admins */}
+      <Dialog open={passwordModalOpen} onOpenChange={setPasswordModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>تغيير كلمة المرور</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 mt-4">
+            <Input type="password" placeholder="كلمة المرور الجديدة" value={passwordNew} onChange={(e)=>setPasswordNew(e.target.value)} />
+            <Input type="password" placeholder="تأكيد كلمة المرور" value={passwordConfirm} onChange={(e)=>setPasswordConfirm(e.target.value)} />
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setPasswordModalOpen(false)}>إلغاء</Button>
+              <Button onClick={async () => {
+                if (!passwordTargetId) return;
+                if (!passwordNew) { toast.error('ادخل كلمة المرور'); return; }
+                if (passwordNew !== passwordConfirm) { toast.error('كلمات المرور غير متطابقة'); return; }
+                try {
+                  const { data: sess } = await supabase.auth.getSession();
+                  const token = (sess as any)?.session?.access_token || '';
+                  const resp = await fetch('/.netlify/functions/admin-set-profile-password', {
+                    method: 'POST',
+                    headers: {
+                      'content-type': 'application/json',
+                      ...(token ? { authorization: `Bearer ${token}` } : {})
+                    },
+                    body: JSON.stringify({ userId: passwordTargetId, password: passwordNew })
+                  });
+                  const json = await resp.json().catch(()=>null);
+                  if (!resp.ok) {
+                    console.error('set password error', json || resp.statusText);
+                    toast.error(json?.error || 'فشل تحديث كلمة المرور');
+                  } else {
+                    toast.success('تم تحديث كلمة المرور');
+                    setPasswordModalOpen(false);
+                    setPasswordTargetId(null);
+                    setPasswordNew('');
+                    setPasswordConfirm('');
+                  }
+                } catch (e) {
+                  console.error('set password error', e);
+                  toast.error('فشل تحديث كلمة المرور');
+                }
+              }}>حفظ</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 }
