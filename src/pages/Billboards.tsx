@@ -79,8 +79,8 @@ export default function Billboards() {
     if (!editing) return;
     setSaving(true);
     const id = editing.id;
-    const { Billboard_Name, City, Municipality, District, Nearest_Landmark, Size, Level, Image_URL } = editForm as any;
-    const payload: any = { Billboard_Name, City, Municipality, District, Nearest_Landmark, Size, Level, Image_URL };
+    const { Billboard_Name, City, Municipality, District, Nearest_Landmark, Size, Level, Image_URL, is_partnership, partner_companies, capital, capital_remaining } = editForm as any;
+    const payload: any = { Billboard_Name, City, Municipality, District, Nearest_Landmark, Size, Level, Image_URL, is_partnership: !!is_partnership, partner_companies: Array.isArray(partner_companies) ? partner_companies : String(partner_companies).split(',').map(s=>s.trim()).filter(Boolean), capital: Number(capital)||0, capital_remaining: Number(capital_remaining)||Number(capital)||0 };
 
     const { error } = await supabase.from('billboards').update(payload).eq('ID', Number(id));
 
@@ -96,6 +96,25 @@ export default function Billboards() {
       setEditing(null);
     }
     setSaving(false);
+  };
+
+  const addBillboard = async () => {
+    setAdding(true);
+    const { Billboard_Name, City, Municipality, District, Nearest_Landmark, Size, Level, Image_URL, is_partnership, partner_companies, capital, capital_remaining } = addForm as any;
+    const payload: any = { Billboard_Name, City, Municipality, District, Nearest_Landmark, Size, Level, Image_URL, is_partnership: !!is_partnership, partner_companies: Array.isArray(partner_companies) ? partner_companies : String(partner_companies).split(',').map(s=>s.trim()).filter(Boolean), capital: Number(capital)||0, capital_remaining: Number(capital_remaining)||Number(capital)||0 };
+    try {
+      const { data, error } = await supabase.from('billboards').insert(payload).select().single();
+      if (error) throw error;
+      toast.success('تم إضافة اللوحة');
+      const fresh = await loadBillboards();
+      setBillboards(fresh);
+      setAddOpen(false);
+    } catch (e:any) {
+      console.error('add billboard error', e);
+      toast.error(e?.message || 'فشل الإضافة');
+    } finally {
+      setAdding(false);
+    }
   };
 
   useEffect(() => {
