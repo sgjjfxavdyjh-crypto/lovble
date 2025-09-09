@@ -233,7 +233,6 @@ export default function Users() {
                     <TableHead>الزبائن المسموح بهم</TableHead>
                     <TableHead>فئة الأسعار</TableHead>
                     <TableHead>تاريخ الإنشاء</TableHead>
-                    <TableHead>المعرف</TableHead>
                     <TableHead>إجراءات</TableHead>
                   </TableRow>
                 </TableHeader>
