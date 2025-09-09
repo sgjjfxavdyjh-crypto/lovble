@@ -1,22 +1,4 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { supabase } from '@/integrations/supabase/client';
-
-interface PaymentRow {
-  id: string;
-  customer_id: string | null;
-  customer_name: string;
-  contract_number: string | null;
-  amount: number | null;
-  method: string | null;
-  reference: string | null;
-  notes: string | null;
-  paid_at: string | null;
-  entry_type: string | null;
-}
 
 import { useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
