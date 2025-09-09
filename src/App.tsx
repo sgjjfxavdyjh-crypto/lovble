@@ -71,6 +71,13 @@ const App = () => (
                 </MainLayout>
               </ProtectedRoute>
             } />
+            <Route path="/admin/shared-companies" element={
+              <ProtectedRoute requireAdmin>
+                <MainLayout>
+                  <SharedCompanies />
+                </MainLayout>
+              </ProtectedRoute>
+            } />
             <Route path="/admin/pricing" element={
               <ProtectedRoute requireAdmin>
                 <MainLayout>
