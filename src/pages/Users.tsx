@@ -46,6 +46,7 @@ interface ProfileRow {
 
 export default function Users() {
   const [rows, setRows] = useState<ProfileRow[]>([]);
+  const { profile, isAdmin } = useAuth();
   const [count, setCount] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
