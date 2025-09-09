@@ -109,18 +109,30 @@ export default function Customers() {
   const [detailsContracts, setDetailsContracts] = useState<ContractRow[]>([]);
   const [detailsPayments, setDetailsPayments] = useState<PaymentRow[]>([]);
 
-  const openCustomer = async (id: string) => {
-    setSelectedCustomer(id);
+  const openCustomer = async (idOrKey: string) => {
+    // idOrKey may be a real customer id, or a fallback key like 'name:Customer Name'
+    let id = idOrKey;
+    let nameFallback: string | null = null;
+    if (typeof idOrKey === 'string' && idOrKey.startsWith('name:')) {
+      nameFallback = idOrKey.slice(5);
+      id = '';
+    }
+
+    setSelectedCustomer(idOrKey);
     setDialogOpen(true);
 
     try {
       // First fetch payments for this customer (by id), fallback to name
-      let pRes: any = await supabase.from('customer_payments').select('id,customer_id,customer_name,contract_number,amount,method,reference,notes,paid_at,entry_type').eq('customer_id', id).order('paid_at', { ascending: false });
-      let paymentsData = pRes.data || [];
+      let paymentsData: any[] = [];
 
-      // determine customer name if available
+      if (id) {
+        const pRes: any = await supabase.from('customer_payments').select('id,customer_id,customer_name,contract_number,amount,method,reference,notes,paid_at,entry_type').eq('customer_id', id).order('paid_at', { ascending: false });
+        paymentsData = pRes.data || [];
+      }
+
+      // determine customer name if available (from customers list) or fallback
       const cust = customers.find(x => x.id === id);
-      const name = cust?.name || null;
+      const name = cust?.name || nameFallback || null;
 
       if ((!paymentsData || paymentsData.length === 0) && name) {
         const pByName = await supabase.from('customer_payments').select('id,customer_id,customer_name,contract_number,amount,method,reference,notes,paid_at,entry_type').ilike('customer_name', name).order('paid_at', { ascending: false });
@@ -132,9 +144,13 @@ export default function Customers() {
       // collect contract numbers from payments
       const contractNumbers = Array.from(new Set((paymentsData || []).map((p:any)=>p.contract_number).filter(Boolean)));
 
-      // fetch contracts by customer_id, and also by name and contract numbers as fallback
-      const contractsById = await supabase.from('Contract').select('Contract_Number, "Customer Name", "Total Rent", "Contract Date", "Start Date", "End Date", customer_id').eq('customer_id', id);
-      let contractsData: any[] = contractsById.data || [];
+      // fetch contracts by customer_id if we have id, otherwise by name or contract numbers
+      let contractsData: any[] = [];
+
+      if (id) {
+        const contractsById = await supabase.from('Contract').select('Contract_Number, "Customer Name", "Total Rent", "Contract Date", "Start Date", "End Date", customer_id').eq('customer_id', id);
+        contractsData = contractsById.data || [];
+      }
 
       if ((contractsData || []).length === 0 && name) {
         const byName = await supabase.from('Contract').select('Contract_Number, "Customer Name", "Total Rent", "Contract Date", "Start Date", "End Date", customer_id').ilike('Customer Name', name);
