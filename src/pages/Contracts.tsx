@@ -227,17 +227,6 @@ export default function Contracts() {
 
   const uniqueCustomers = [...new Set(contracts.map(c => c.customer_name))].filter(Boolean);
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">جاري تحميل العقود...</p>
-        </div>
-      </div>
-    );
-  }
-
   const filteredAvailable = availableBillboards.filter((b) => {
     const q = bbSearch.trim().toLowerCase();
     if (!q) return true;
@@ -266,6 +255,17 @@ export default function Contracts() {
   useEffect(() => {
     setFormData(prev => ({ ...prev, rent_cost: estimatedTotal }));
   }, [estimatedTotal]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">جاري تحميل العقود...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6" dir="rtl">
@@ -645,7 +645,7 @@ export default function Contracts() {
                   <CardHeader>
                     <CardTitle className="text-lg flex items-center gap-2">
                       <User className="h-5 w-5" />
-                      معلومات الزبون
+                      معلوما�� الزبون
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
