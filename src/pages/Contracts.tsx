@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -90,7 +91,7 @@ export default function Contracts() {
   const handleCreateContract = async () => {
     try {
       if (!formData.customer_name || !formData.start_date || !formData.end_date || formData.billboard_ids.length === 0) {
-        toast.error('يرجى ملء جميع الحقول المطلوبة');
+        toast.error('يرجى ملء جميع الحقول المطلو��ة');
         return;
       }
 
@@ -170,7 +171,7 @@ export default function Contracts() {
     }
   };
 
-  // تصفية العقود
+  // تصفية العق��د
   const filteredContracts = contracts.filter(contract => {
     const matchesSearch = 
       contract.customer_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -269,7 +270,7 @@ export default function Contracts() {
 
   return (
     <div className="space-y-6" dir="rtl">
-      {/* العنوان والأزرار */}
+      {/* العن��ان والأزرار */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-foreground">إدارة العقود</h1>
@@ -342,7 +343,7 @@ export default function Contracts() {
                         <Input type="date" value={formData.end_date} readOnly disabled />
                       </div>
                       <div>
-                        <Label>التكلفة التقديرية</Label>
+                        <Label>التكلف�� التقديرية</Label>
                         <Input type="number" value={formData.rent_cost} onChange={(e)=>setFormData({...formData, rent_cost: Number(e.target.value)})} />
                         <div className="text-xs text-muted-foreground mt-1">يتم تحديثها تلقائياً حسب الفئة والمدة وعدد اللوحات</div>
                       </div>
