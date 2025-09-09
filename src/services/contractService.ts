@@ -134,6 +134,7 @@ export async function getContractWithBillboards(contractId: string): Promise<any
       id: c.Contract_Number ?? c['Contract Number'] ?? c.id ?? c.ID,
       Contract_Number: c.Contract_Number ?? c['Contract Number'],
       'Contract Number': c['Contract Number'] ?? c.Contract_Number,
+      customer_id: c.customer_id ?? c.customer_id ?? null,
       customer_name: c.customer_name ?? c['Customer Name'] ?? c.Customer_Name ?? '',
       ad_type: c.ad_type ?? c['Ad Type'] ?? c.Ad_Type ?? '',
       start_date: c.start_date ?? c['Contract Date'] ?? c.contract_date ?? '',
@@ -162,7 +163,7 @@ export async function getAvailableBillboards() {
   return data;
 }
 
-// تحديث عق��
+// تحديث عقد
 export async function updateContract(contractId: string, updates: any) {
   let result: any = await (supabase as any)
     .from('Contract')
