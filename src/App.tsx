@@ -55,13 +55,6 @@ const App = () => (
                 </MainLayout>
               </ProtectedRoute>
             } />
-            <Route path="/admin/bookings" element={
-              <ProtectedRoute requireAdmin>
-                <MainLayout>
-                  <Bookings />
-                </MainLayout>
-              </ProtectedRoute>
-            } />
             <Route path="/admin/users" element={
               <ProtectedRoute requireAdmin>
                 <MainLayout>
