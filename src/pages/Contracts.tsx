@@ -743,6 +743,30 @@ export default function Contracts() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Assign customer dialog */}
+      <Dialog open={assignOpen} onOpenChange={setAssignOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>تعيين زبون للعقد {assignContractNumber}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 p-2">
+            <Select value={assignCustomerId || ''} onValueChange={(v) => setAssignCustomerId(v || null)}>
+              <SelectTrigger><SelectValue placeholder="اختر زبون" /></SelectTrigger>
+              <SelectContent className="max-h-60">
+                <SelectItem value="">اختيار</SelectItem>
+                {customersList.map(c => (
+                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => { setAssignOpen(false); setAssignCustomerId(null); setAssignContractNumber(null); }}>إلغاء</Button>
+              <Button onClick={saveAssign}>حفظ</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
