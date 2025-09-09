@@ -60,7 +60,7 @@ const handler: Handler = async (event) => {
 
     // fetch contracts that may need customer_id (customer_id null or empty)
     const { data: allContracts, error: contractErr } = await supabase.from('Contract').select('Contract_Number, "Customer Name", customer_id');
-    if (contractErr) return { statusCode: 500, body: JSON.stringify({ error: contractErr.message }) });
+    if (contractErr) return { statusCode: 500, body: JSON.stringify({ error: contractErr.message }) };
 
     const contractsToFix = (allContracts || []).filter((c: any) => c.customer_id === null || String(c.customer_id || '').trim() === '');
 
