@@ -205,7 +205,7 @@ export default function Customers() {
           <h2>إيصال دفع</h2>
           <p><strong>العميل:</strong> ${payment.customer_name}</p>
           <p><strong>العقد:</strong> ${payment.contract_number || '—'}</p>
-          <p><strong>المبلغ:</strong> ${(Number(payment.amount)||0).toLocaleString('ar-LY')} د.ل</p>
+          <p><strong>المبلغ:</strong> ${(Number(payment.amount)||0).toLocaleString('ar-LY')} ��.ل</p>
           <p><strong>الطريقة:</strong> ${payment.method || '—'}</p>
           <p><strong>المرجع:</strong> ${payment.reference || '—'}</p>
           <p><strong>التاريخ:</strong> ${payment.paid_at ? new Date(payment.paid_at).toLocaleString('ar-LY') : ''}</p>
@@ -297,7 +297,7 @@ export default function Customers() {
                   <TableHead>عدد العقود</TableHead>
                   <TableHead>إجمالي الإيجار</TableHead>
                   <TableHead>المدفوع</TableHead>
-                  <TableHead>ا��متبقي</TableHead>
+                  <TableHead>المتبقي</TableHead>
                   <TableHead>إجراءات</TableHead>
                 </TableRow>
               </TableHeader>
@@ -305,6 +305,8 @@ export default function Customers() {
                 {visible.map(c => (
                   <TableRow key={c.id} className="hover:bg-card/50 transition-colors">
                     <TableCell className="font-medium">{c.name}</TableCell>
+                    <TableCell>{(c as any).phone || '-'}</TableCell>
+                    <TableCell>{(c as any).company || '-'}</TableCell>
                     <TableCell>{c.contractsCount}</TableCell>
                     <TableCell>{c.totalRent.toLocaleString('ar-LY')} د.ل</TableCell>
                     <TableCell>{c.totalPaid.toLocaleString('ar-LY')} د.ل</TableCell>
@@ -312,7 +314,7 @@ export default function Customers() {
                     <TableCell>
                       <div className="flex gap-2">
                         <Button size="sm" onClick={() => openCustomer(c.id)}>عرض</Button>
-                        <Button size="sm" variant="outline" onClick={() => { setEditingCustomerId(c.id); setCustomerNameInput(c.name); setNewCustomerOpen(true); }}>تعديل</Button>
+                        <Button size="sm" variant="outline" onClick={() => { setEditingCustomerId(c.id); setCustomerNameInput(c.name); setCustomerPhoneInput((c as any).phone || ''); setCustomerCompanyInput((c as any).company || ''); setNewCustomerOpen(true); }}>تعديل</Button>
                       </div>
                     </TableCell>
                   </TableRow>
