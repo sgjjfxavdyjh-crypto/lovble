@@ -292,10 +292,12 @@ export default function Customers() {
               <TableHeader>
                 <TableRow>
                   <TableHead>اسم الزبون</TableHead>
+                  <TableHead>الهاتف</TableHead>
+                  <TableHead>الشركة</TableHead>
                   <TableHead>عدد العقود</TableHead>
                   <TableHead>إجمالي الإيجار</TableHead>
                   <TableHead>المدفوع</TableHead>
-                  <TableHead>المتبقي</TableHead>
+                  <TableHead>ا��متبقي</TableHead>
                   <TableHead>إجراءات</TableHead>
                 </TableRow>
               </TableHeader>
@@ -353,7 +355,7 @@ export default function Customers() {
                           <div className="text-right">
                             <div>الإجمالي: {totalRent.toLocaleString('ar-LY')} د.ل</div>
                             <div>مدفوع: {paidForContract.toLocaleString('ar-LY')} د.ل</div>
-                            <div>المتب��ي: {remaining.toLocaleString('ar-LY')} د.ل</div>
+                            <div>المتبقي: {remaining.toLocaleString('ar-LY')} د.ل</div>
                           </div>
                         </div>
                       );
