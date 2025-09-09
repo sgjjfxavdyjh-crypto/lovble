@@ -47,34 +47,59 @@ export default function Customers() {
     })();
   }, []);
 
-  const customerNames = useMemo(() => Array.from(new Set(payments.map(p => p.customer_name).filter(Boolean))), [payments]);
-
-  // Build summary per customer using payments + contracts
+  // Build summary per customer using customers table, payments + contracts
   const customersSummary = useMemo(() => {
-    const map = new Map<string, { name: string; contractsCount: number; totalRent: number; totalPaid: number }>();
+    // initialize map from customers list
+    const map = new Map<string, { id: string; name: string; contractsCount: number; totalRent: number; totalPaid: number }>();
+    for (const c of (customers || [])) {
+      const id = (c as any).id;
+      const name = (c as any).name || '—';
+      map.set(id, { id, name, contractsCount: 0, totalRent: 0, totalPaid: 0 });
+    }
 
     // contracts info
-    for (const c of contracts) {
-      const name = (c['Customer Name'] || '').toString() || '—';
-      const rent = Number(c['Total Rent'] || 0) || 0;
-      const cur = map.get(name) || { name, contractsCount: 0, totalRent: 0, totalPaid: 0 };
-      cur.contractsCount += 1;
-      cur.totalRent += rent;
-      map.set(name, cur);
+    for (const ct of contracts) {
+      const cid = (ct as any).customer_id ?? null;
+      const rent = Number((ct as any)['Total Rent'] || 0) || 0;
+      if (cid && map.has(cid)) {
+        const cur = map.get(cid)!;
+        cur.contractsCount += 1;
+        cur.totalRent += rent;
+      } else {
+        // fallback: group by name if customer_id missing
+        const name = (ct['Customer Name'] || '').toString() || '—';
+        const key = `name:${name}`;
+        if (!map.has(key)) map.set(key, { id: key, name, contractsCount: 0, totalRent: 0, totalPaid: 0 } as any);
+        const cur = map.get(key)!;
+        cur.contractsCount += 1;
+        cur.totalRent += rent;
+      }
     }
 
     // payments
     for (const p of payments) {
-      const name = (p.customer_name || '').toString() || '—';
+      const cid = (p.customer_id || null) as string | null;
       const amt = Number(p.amount || 0) || 0;
-      const cur = map.get(name) || { name, contractsCount: 0, totalRent: 0, totalPaid: 0 };
-      cur.totalPaid += amt;
-      map.set(name, cur);
+      if (cid && map.has(cid)) {
+        const cur = map.get(cid)!;
+        cur.totalPaid += amt;
+      } else if (p.customer_name) {
+        // try to find customer by name
+        const match = Array.from(map.values()).find(x => x.name && x.name.toLowerCase() === String(p.customer_name).toLowerCase());
+        if (match) {
+          match.totalPaid += amt;
+        } else {
+          const name = p.customer_name || '—';
+          const key = `name:${name}`;
+          if (!map.has(key)) map.set(key, { id: key, name, contractsCount: 0, totalRent: 0, totalPaid: 0 } as any);
+          const cur = map.get(key)!;
+          cur.totalPaid += amt;
+        }
+      }
     }
 
-    // convert to array, sort by totalRent desc
     return Array.from(map.values()).sort((a, b) => b.totalRent - a.totalRent);
-  }, [payments, contracts]);
+  }, [payments, contracts, customers]);
 
   const totalAllPaid = payments.reduce((s, p) => s + (Number(p.amount) || 0), 0);
 
