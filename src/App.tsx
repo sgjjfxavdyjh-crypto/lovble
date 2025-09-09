@@ -19,6 +19,7 @@ import Reports from "./pages/Reports";
 import InstallationPricing from "./pages/InstallationPricing";
 import Customers from "./pages/Customers";
 import BookingRequests from "./pages/BookingRequests";
+import SharedBillboards from "./pages/SharedBillboards";
 import { MainLayout } from "@/components/Layout/MainLayout";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 
