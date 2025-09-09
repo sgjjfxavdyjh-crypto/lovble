@@ -25,18 +25,32 @@ interface ContractCreate {
 export async function createContract(contractData: ContractData) {
   // فصل معرفات اللوحات عن بيانات العقد
   const { billboard_ids, ...contractPayload } = contractData;
-  
+
+  // إذا كان هناك زبون بنفس الاسم، حاول العثور على customer_id
+  let customer_id: string | null = null;
+  if (contractPayload.customer_name) {
+    try {
+      const { data: existing } = await supabase.from('customers').select('id').eq('name', contractPayload.customer_name).limit(1).maybeSingle();
+      if (existing && (existing as any).id) customer_id = (existing as any).id;
+    } catch (e) {
+      // ignore lookup failure, proceed without customer_id
+    }
+  }
+
   // إنشاء العقد
+  const insertPayload: any = {
+    'Customer Name': contractPayload.customer_name,
+    'Ad Type': contractPayload.ad_type || '',
+    'Contract Date': contractPayload.start_date,
+    'End Date': contractPayload.end_date,
+    'Total Rent': contractPayload.rent_cost,
+    'Discount': contractPayload.discount ?? null
+  };
+  if (customer_id) insertPayload.customer_id = customer_id;
+
   const { data: contract, error: contractError } = await supabase
     .from('Contract')
-    .insert({
-      'Customer Name': contractPayload.customer_name,
-      'Ad Type': contractPayload.ad_type || '',
-      'Contract Date': contractPayload.start_date,
-      'End Date': contractPayload.end_date,
-      'Total Rent': contractPayload.rent_cost,
-      'Discount': contractPayload.discount ?? null
-    })
+    .insert(insertPayload)
     .select()
     .single();
 
