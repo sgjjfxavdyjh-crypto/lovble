@@ -25,10 +25,11 @@ export default function ContractEdit() {
   // selection
   const [selected, setSelected] = useState<string[]>([]);
 
-  // customers combobox
-  const [customers, setCustomers] = useState<string[]>([]);
+  // customers combobox (id+name)
+  const [customers, setCustomers] = useState<{id:string; name:string}[]>([]);
   const [customerOpen, setCustomerOpen] = useState(false);
   const [customerQuery, setCustomerQuery] = useState('');
+  const [customerId, setCustomerId] = useState<string | null>(null);
 
   // filters
   const [q, setQ] = useState('');
@@ -72,11 +73,9 @@ export default function ContractEdit() {
   useEffect(() => {
     (async () => {
       try {
-        const { data, error } = await supabase.from('Contract').select('"Customer Name"');
+        const { data, error } = await supabase.from('customers').select('id,name').order('name', { ascending: true });
         if (!error && Array.isArray(data)) {
-          const list = Array.from(new Set(((data as any[]) ?? []).map((r: any) => r['Customer Name']).filter(Boolean)));
-          list.sort((a, b) => String(a).localeCompare(String(b), 'ar'));
-          setCustomers(list as string[]);
+          setCustomers((data as any) || []);
         }
       } catch (e) {
         console.warn('load customers failed');
@@ -90,6 +89,7 @@ export default function ContractEdit() {
       try {
         const c = await getContractWithBillboards(contractNumber);
         setCustomerName(c.customer_name || c['Customer Name'] || '');
+        setCustomerId(c.customer_id ?? null);
         setAdType(c.ad_type || c['Ad Type'] || '');
         const s = c.start_date || c['Contract Date'] || '';
         const e = c.end_date || c['End Date'] || '';
@@ -208,14 +208,16 @@ export default function ContractEdit() {
         await removeBillboardFromContract(contractNumber, id);
       }
 
-      await updateContract(contractNumber, {
+      const updates: any = {
         'Customer Name': customerName,
         'Ad Type': adType,
         'Contract Date': startDate,
         'End Date': endDate,
         'Total Rent': finalTotal,
         'Discount': discountAmount,
-      });
+      };
+      if (customerId) updates.customer_id = customerId;
+      await updateContract(contractNumber, updates);
 
       toast.success('تم حفظ التعديلات');
       navigate('/admin/contracts');
