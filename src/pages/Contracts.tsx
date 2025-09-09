@@ -4,7 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { getPriceFor, CustomerType, CUSTOMERS } from '@/data/pricing';
 import { Button } from '@/components/ui/button';
-import { PDFDocument, rgb } from 'pdf-lib';
+import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -370,7 +370,7 @@ export default function Contracts() {
                         />
                       </div>
                       <div>
-                        <Label>المدة (با��أشهر)</Label>
+                        <Label>المدة (بالأشهر)</Label>
                         <Select value={String(durationMonths)} onValueChange={(v)=>setDurationMonths(Number(v))}>
                           <SelectTrigger><SelectValue placeholder="اختر المدة" /></SelectTrigger>
                           <SelectContent>
@@ -695,7 +695,7 @@ export default function Contracts() {
                                 p0.drawText(`التاريخ: ${dateStr}`, { x: 40, y: height - 140, ...drawOpts(helv, 11) });
                                 p0.drawText(`الطرف الأول: ${partyOne}`, { x: 40, y: height - 170, ...drawOpts(helv, 11) });
                                 p0.drawText(`الطرف الثاني: ${partyTwo}`, { x: 40, y: height - 190, ...drawOpts(helv, 11) });
-                                p0.drawText(`قيمة العقد: ${total} د.ل`, { x: 40, y: height - 210, ...drawOpts(helv, 11) });
+                                p0.drawText(`قي��ة العقد: ${total} د.ل`, { x: 40, y: height - 210, ...drawOpts(helv, 11) });
                               } else {
                                 // fallback: draw ascii-only placeholders
                                 p0.drawText(`Contract: ${contractNumber}`, { x: 40, y: height - 120, size: 12, color: rgb(0,0,0) });
