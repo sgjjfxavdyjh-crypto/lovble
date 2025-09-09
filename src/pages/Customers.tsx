@@ -46,7 +46,7 @@ export default function Customers() {
       const [pRes, cRes, cuRes] = await Promise.all([
         supabase.from('customer_payments').select('id,customer_id,customer_name,contract_number,amount,method,reference,notes,paid_at,entry_type').order('paid_at', { ascending: false }),
         supabase.from('Contract').select('Contract_Number, "Customer Name", "Total Rent", "Contract Date", "Start Date", "End Date", customer_id'),
-        supabase.from('customers').select('id,name').order('name', { ascending: true })
+        supabase.from('customers').select('id,name,phone,company').order('name', { ascending: true })
       ]);
 
       if (!pRes.error) setPayments((pRes.data || []) as any);
@@ -200,7 +200,7 @@ export default function Customers() {
       <html dir="rtl"><head><meta charset="utf-8"><title>إيصال دفع</title></head>
       <body>
         <div style="font-family: sans-serif; padding:20px; max-width:600px; margin:auto;">
-          <h2>إيصال دفع</h2>
+          <h2>��يصال دفع</h2>
           <p><strong>العميل:</strong> ${payment.customer_name}</p>
           <p><strong>العقد:</strong> ${payment.contract_number || '—'}</p>
           <p><strong>المبلغ:</strong> ${(Number(payment.amount)||0).toLocaleString('ar-LY')} د.ل</p>
@@ -342,7 +342,7 @@ export default function Customers() {
                           </div>
                           <div className="text-right">
                             <div>الإجمالي: {totalRent.toLocaleString('ar-LY')} د.ل</div>
-                            <div>م��فوع: {paidForContract.toLocaleString('ar-LY')} د.ل</div>
+                            <div>مدفوع: {paidForContract.toLocaleString('ar-LY')} د.ل</div>
                             <div>المتبقي: {remaining.toLocaleString('ar-LY')} د.ل</div>
                           </div>
                         </div>
