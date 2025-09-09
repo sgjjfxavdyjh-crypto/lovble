@@ -142,7 +142,7 @@ export default function ContractCreate() {
         toast.error('يرجى تعبئة بيانات الزبون والتواريخ واختيار لوحات');
         return;
       }
-      const payload = {
+      const payload: any = {
         customer_name: customerName,
         start_date: startDate,
         end_date: endDate,
@@ -150,7 +150,8 @@ export default function ContractCreate() {
         discount: discountAmount,
         ad_type: adType,
         billboard_ids: selected,
-      } as any;
+      };
+      if (customerId) payload.customer_id = customerId;
       await createContract(payload);
       toast.success('تم إنشاء العقد بنجاح');
       navigate('/admin/contracts');
