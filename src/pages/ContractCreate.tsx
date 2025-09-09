@@ -22,10 +22,11 @@ export default function ContractCreate() {
   // selection
   const [selected, setSelected] = useState<string[]>([]);
 
-  // customers combobox
-  const [customers, setCustomers] = useState<string[]>([]);
+  // customers combobox (id+name)
+  const [customers, setCustomers] = useState<{id: string; name: string}[]>([]);
   const [customerOpen, setCustomerOpen] = useState(false);
   const [customerQuery, setCustomerQuery] = useState('');
+  const [customerId, setCustomerId] = useState<string | null>(null);
 
   // filters
   const [q, setQ] = useState('');
