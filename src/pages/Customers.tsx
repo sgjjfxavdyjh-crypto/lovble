@@ -237,7 +237,7 @@ export default function Customers() {
             <Input placeholder="ابحث بالزبون" value={search} onChange={(e)=>setSearch(e.target.value)} />
             <div className="flex items-center justify-center gap-2">
               <Button onClick={() => { setCustomerNameInput(''); setCustomerPhoneInput(''); setCustomerCompanyInput(''); setEditingCustomerId(null); setNewCustomerOpen(true); }}>إضافة زبون جديد</Button>
-              <Button onClick={async () => {
+              <Button disabled={syncing} onClick={async () => {
                 try {
                   setSyncing(true);
                   const { data: sessionData } = await supabase.auth.getSession();
@@ -250,14 +250,27 @@ export default function Customers() {
                     },
                     body: JSON.stringify({ createMissing: false })
                   });
-                  const json = await resp.json();
+
+                  let json: any = null;
+                  try {
+                    json = await resp.json();
+                  } catch (err) {
+                    // sometimes body stream may be consumed or invalid JSON; try text
+                    try {
+                      const text = await resp.text();
+                      json = text ? { text } : null;
+                    } catch (err2) {
+                      json = null;
+                    }
+                  }
+
                   if (!resp.ok) {
-                    console.error('sync error', json);
-                    toast.error(json?.error || 'فشل المزامنة');
+                    console.error('sync error', json || resp.statusText);
+                    toast.error((json && (json.error || json.text)) || 'فشل المزامنة');
                   } else {
-                    toast.success(`تمت المزامنة. تم تحديث ${json.updated || 0} عقود، إضافة عملاء: ${json.createdCustomers || 0}`);
+                    toast.success(`تمت المزامنة. تم تحديث ${json?.updated || 0} عقود، إضافة عملاء: ${json?.createdCustomers || 0}`);
                     // reload data if something changed
-                    if ((json.updated || 0) > 0 || (json.createdCustomers || 0) > 0) loadData();
+                    if ((json?.updated || 0) > 0 || (json?.createdCustomers || 0) > 0) loadData();
                   }
                 } catch (e) {
                   console.error('sync error', e);
@@ -266,7 +279,7 @@ export default function Customers() {
                   setSyncing(false);
                 }
               }}>
-                مزامنة العملاء
+                {syncing ? 'جاري المزامنة...' : 'مزامنة العملاء'}
               </Button>
             </div>
             <div className="flex items-center text-sm text-muted-foreground">إجمالي المدفوعات: {totalAllPaid.toLocaleString('ar-LY')} د.ل</div>
