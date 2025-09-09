@@ -21,7 +21,7 @@ export const BillboardGridCard: React.FC<BillboardGridCardProps> = ({
   showBookingActions = true
 }) => {
   const { isAdmin } = useAuth();
-  const isAvailable = billboard.Status === 'متا��' || billboard.Status === 'available' || !billboard.Contract_Number;
+  const isAvailable = billboard.Status === 'متاح' || billboard.Status === 'available' || !billboard.Contract_Number;
   const isMaintenance = billboard.Status === 'صيانة' || billboard.Status === 'maintenance';
   const statusLabel = isAvailable ? 'متاح' : isMaintenance ? 'صيانة' : 'محجوز';
   const statusClass = isAvailable
@@ -145,8 +145,8 @@ export const BillboardGridCard: React.FC<BillboardGridCardProps> = ({
             )}
           </div>
 
-          {/* معلومات العقد (نمط موحّد للجميع) */}
-          {(contractNumber || endDate || customerName) && (
+          {/* معلومات العقد (تظهر للمدير فقط) */}
+          {isAdmin && (contractNumber || endDate || customerName) && (
             <div className="mb-4 text-xs text-muted-foreground">
               <div className="flex flex-wrap gap-2">
                 {contractNumber && (
@@ -162,7 +162,7 @@ export const BillboardGridCard: React.FC<BillboardGridCardProps> = ({
             </div>
           )}
 
-          {/* أزرار الإجراءات */}
+          {/* أزرار الإجراءا�� */}
           {showBookingActions && (
             <div className="flex gap-2">
               <Button

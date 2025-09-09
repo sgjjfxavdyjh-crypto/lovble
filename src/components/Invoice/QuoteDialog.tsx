@@ -95,8 +95,8 @@ function buildQuoteHtml(props: Props) {
   @page { size: A4; margin: 18mm; }
   body { font-family: 'Cairo','Tajawal',system-ui,sans-serif; color:#111; }
   .header { display:flex; align-items:center; justify-content:space-between; border-bottom:3px solid #d4af37; padding-bottom:8px; margin-bottom:12px; }
-  .brand { display:flex; align-items:center; gap:12px; }
-  .brand img { width:64px; height:64px; border-radius:12px; }
+  .brand { display:block; }
+  .brand img { height:64px; width:auto; border-radius:0; }
   .brand h1 { margin:0; font-size:24px; font-weight:800; }
   .meta { text-align:left; color:#333; font-weight:600; }
   .section-title { font-weight:800; font-size:18px; margin:12px 0 8px; color:#222; }
@@ -145,7 +145,7 @@ function buildQuoteHtml(props: Props) {
 
   <div class="page-break"></div>
 
-  <div class="section-title">المواقع المتفق عليها بين الطرفين</div>
+  <div class="section-title">المواقع المتفق عليها بي�� الطرفين</div>
   <table>
     <thead>
       <tr>

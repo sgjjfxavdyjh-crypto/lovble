@@ -94,8 +94,47 @@ export const fetchContracts = async (): Promise<Contract[]> => {
       return normalized as any;
     }
 
-    console.warn('Contract table not available or errored. Details:', (error as any)?.message || JSON.stringify(error));
-    return [];
+    console.warn('Contract table not available or errored, falling back to contracts. Details:', (error as any)?.message || JSON.stringify(error));
+
+    // المحاولة 2: جدول contracts (حديث بحقول snake_case)
+    const { data: v2, error: err2 } = await supabase
+      .from('contracts')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (err2) {
+      console.warn('Failed fetching contracts from both tables:', (err2 as any)?.message || JSON.stringify(err2));
+      return [];
+    }
+
+    const mapped: Contract[] = (v2 || []).map((c: any) => ({
+      Contract_Number: String(c.id),
+      'Contract Number': String(c.id),
+      'Customer Name': c.customer_name ?? '',
+      'Contract Date': c.start_date ?? c.created_at ?? '',
+      Duration: undefined,
+      'End Date': c.end_date ?? '',
+      'Ad Type': c.ad_type ?? '',
+      'Total Rent': typeof c.rent_cost === 'number' ? c.rent_cost : Number(c.rent_cost) || 0,
+      'Installation Cost': 0,
+      Total: (typeof c.rent_cost === 'number' ? c.rent_cost : Number(c.rent_cost) || 0).toString(),
+      'Payment 1': undefined,
+      'Payment 2': undefined,
+      'Payment 3': undefined,
+      'Total Paid': undefined,
+      Remaining: undefined,
+      Level: undefined,
+      Phone: undefined,
+      Company: undefined,
+      'Print Status': undefined,
+      Discount: undefined,
+      'Renewal Status': undefined,
+      'Actual 3% Fee': undefined,
+      '3% Fee': undefined,
+    }));
+
+    console.log('Fetched contracts (contracts -> mapped):', mapped.length);
+    return mapped;
   } catch (error: any) {
     console.warn('Error in fetchContracts, returning empty list:', error?.message || JSON.stringify(error));
     return [];

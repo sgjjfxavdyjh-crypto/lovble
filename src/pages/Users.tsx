@@ -63,29 +63,32 @@ export default function Users() {
     const to = from + PAGE_SIZE - 1;
 
     try {
+      const inNetlify = typeof window !== 'undefined' && /netlify\.app$/i.test(window.location.hostname);
       const { data: sess } = await supabase.auth.getSession();
       const token = sess?.session?.access_token || '';
-      const res = await fetch(`/.netlify/functions/admin-list-profiles?from=${from}&to=${to}` , {
-        headers: { Authorization: token ? `Bearer ${token}` : '' }
-      });
-      if (res.ok) {
-        const json = await res.json();
-        const normalize = (v: any): string[] | null => {
-          if (!v) return null;
-          if (Array.isArray(v)) return v.map(String);
-          return null;
-        };
-        const data = (json.data || []).map((d: any) => ({
-          ...d,
-          allowed_clients: normalize(d.allowed_clients),
-          price_tier: d.price_tier ?? null,
-        }));
-        setRows(data);
-        setCount(json.count || 0);
-        setHasAssignedClient(Boolean(json.hasAssignedClient));
-        setHasPermissions(Boolean(json.hasPermissions));
-        setLoading(false);
-        return;
+      if (inNetlify && token) {
+        const res = await fetch(`/.netlify/functions/admin-list-profiles?from=${from}&to=${to}` , {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const json = await res.json();
+          const normalize = (v: any): string[] | null => {
+            if (!v) return null;
+            if (Array.isArray(v)) return v.map(String);
+            return null;
+          };
+          const data = (json.data || []).map((d: any) => ({
+            ...d,
+            allowed_clients: normalize(d.allowed_clients),
+            price_tier: d.price_tier ?? null,
+          }));
+          setRows(data);
+          setCount(json.count || 0);
+          setHasAssignedClient(Boolean(json.hasAssignedClient));
+          setHasPermissions(Boolean(json.hasPermissions));
+          setLoading(false);
+          return;
+        }
       }
     } catch (e: any) {
       // fallthrough to direct supabase query

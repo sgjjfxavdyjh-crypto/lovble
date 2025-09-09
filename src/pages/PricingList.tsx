@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import * as UIDialog from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { PRICING, CustomerType, CUSTOMERS } from '@/data/pricing';
+import { Printer } from 'lucide-react';
 
 function normalize(val: any): number | null {
   if (val === null || val === undefined) return null;
@@ -36,7 +37,7 @@ const extraCustomersLsKey = 'pricing_extra_customers_v1';
 const customSizesLsKey = 'pricing_custom_sizes_v1';
 
 export default function PricingList() {
-  const allLevels = useMemo(() => Array.from(new Set(PRICING.map(p => p['ال��ستوى']))), []);
+  const allLevels = useMemo(() => Array.from(new Set(PRICING.map(p => p['المستوى']))), []);
   const allSizes = useMemo(() => Array.from(new Set(PRICING.map(p => p['المقاس']))), []);
 
   const [selectedLevel, setSelectedLevel] = useState<string>(allLevels[0] || 'A');
@@ -65,6 +66,9 @@ export default function PricingList() {
   const [newCatName, setNewCatName] = useState('');
   const [addSizeOpen, setAddSizeOpen] = useState(false);
   const [newSize, setNewSize] = useState('');
+
+  const [printOpen, setPrintOpen] = useState(false);
+  const [printCategory, setPrintCategory] = useState<string>(PRIMARY_SENTINEL);
 
   const saveNewCategory = () => {
     const name = newCatName.trim();
@@ -104,6 +108,11 @@ export default function PricingList() {
 
   const keyFor = (size: string, customer: string) => `${selectedLevel}__${size}__${customer}`;
 
+  const otherCategories = useMemo(() => Array.from(new Set([
+    ...new Set(PRICING.map(p=>p['الزبون'] as string).filter(c=>!PRIMARY_CUSTOMERS.includes(c))),
+    ...extraCustomers,
+  ])), [extraCustomers]);
+
   const getBase = (size: string, customer: string, month: MonthKeyAll): number | null => {
     const row = PRICING.find(r => r['المقاس'] === size && r['المستوى'] === selectedLevel && r['الزبون'] === (customer as any));
     return row ? normalize((row as any)[month]) : null;
@@ -128,6 +137,59 @@ export default function PricingList() {
   const priceFor = (size: string, customer: string): string => {
     const v = getVal(size, customer, selectedMonthKey);
     return v == null ? '—' : `${v.toLocaleString()} د.ل`;
+  };
+
+  const buildPrintHtml = (cat: string) => {
+    const cats = cat === PRIMARY_SENTINEL ? PRIMARY_CUSTOMERS : [cat];
+    const today = new Date().toLocaleDateString('ar-LY');
+    const monthLabel = MONTH_OPTIONS.find(m=>m.key===selectedMonthKey)?.label || 'شهرياً';
+    const rows = sizesForLevel.map(size => {
+      const cols = cats.map(c => {
+        const v = getVal(size, c, selectedMonthKey);
+        return v == null ? '—' : `${Number(v).toLocaleString('ar-LY')} د.ل`;
+      }).join('</td><td class="cell">');
+      return `<tr><td class="size">${size}</td><td class="cell">${cols}</td></tr>`;
+    }).join('');
+
+    const headCols = cats.map(c=>`<th class="cell">${c}</th>`).join('');
+
+    return `<!doctype html><html dir="rtl" lang="ar"><head>
+      <meta charset="utf-8" />
+      <title>طباعة الأسعار</title>
+      <style>
+        body{font-family:'Cairo','Tajawal',system-ui,sans-serif;color:#111}
+        .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+        .title{font-weight:800;font-size:22px}
+        .meta{color:#555}
+        table{width:100%;border-collapse:collapse;margin-top:8px}
+        th,td{border:1px solid #ddd;padding:8px;text-align:right}
+        thead th{background:#f5f5f5}
+        .size{font-weight:700;background:#fafafa}
+        @media print{button{display:none}}
+      </style>
+    </head><body>
+      <div class="header">
+        <div class="title">قائمة الأسعار — مستوى ${selectedLevel} (${monthLabel})</div>
+        <div class="meta">${today}</div>
+      </div>
+      <table>
+        <thead>
+          <tr><th class="cell">المقاس</th>${headCols}</tr>
+        </thead>
+        <tbody>
+          ${rows}
+        </tbody>
+      </table>
+      <div style="margin-top:12px"><button onclick="window.print()">طباعة</button></div>
+    </body></html>`;
+  };
+
+  const handlePrint = () => {
+    const w = window.open('', '_blank');
+    if (!w) return;
+    w.document.write(buildPrintHtml(printCategory));
+    w.document.close();
+    w.focus();
   };
 
   return (
@@ -163,6 +225,9 @@ export default function PricingList() {
               </Select>
               <Button variant="outline" className="ml-2" onClick={() => setAddCatOpen(true)}>إضافة فئة</Button>
               <Button variant="outline" onClick={() => setAddSizeOpen(true)}>إضافة مقاس</Button>
+              <Button className="ml-2" onClick={() => setPrintOpen(true)}>
+                <Printer className="h-4 w-4 ml-2" /> طباعة الأسعار
+              </Button>
             </div>
           </div>
         </CardHeader>
@@ -192,16 +257,16 @@ export default function PricingList() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm text-right">
               <thead>
-                <tr className="bg-muted/50 border-b">
+                <tr className="bg-muted/20 border-b border-border/30">
                   {(otherCustomer === PRIMARY_SENTINEL ? PRIMARY_CUSTOMERS : [otherCustomer]).map(c => (
                     <th key={`head-${c}`} className="p-3 font-medium">{c}</th>
                   ))}
-                  <th className="p-3 text-center w-24 bg-amber-50 dark:bg-white/5">الحجم</th>
+                  <th className="p-3 text-center w-24 bg-muted/20">الحجم</th>
                 </tr>
               </thead>
               <tbody>
                 {sizesForLevel.map(size => (
-                  <tr key={size} className="border-b hover:bg-background/50">
+                  <tr key={size} className="border-b border-border/20 hover:bg-background/50">
                     {(otherCustomer === PRIMARY_SENTINEL ? PRIMARY_CUSTOMERS : [otherCustomer]).map(c => {
                       const k = keyFor(size, c);
                       const isEditing = editing && editing.key === k && editing.month === selectedMonthKey;
@@ -218,14 +283,14 @@ export default function PricingList() {
                               onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); if (e.key === 'Escape') setEditing(null); }}
                             />
                           ) : (
-                            <button className="text-right w-full" onClick={() => setEditing({ key: k, month: selectedMonthKey })}>
+                            <button className="text-right w-full text-foreground" onClick={() => setEditing({ key: k, month: selectedMonthKey })}>
                               {priceFor(size, c)}
                             </button>
                           )}
                         </td>
                       );
                     })}
-                    <td className="p-3 text-center font-semibold bg-amber-50 dark:bg-white/5">{size}</td>
+                    <td className="p-3 text-center font-semibold bg-muted/20">{size}</td>
                   </tr>
                 ))}
               </tbody>
@@ -233,6 +298,31 @@ export default function PricingList() {
           </div>
         </CardContent>
       </Card>
+
+      <UIDialog.Dialog open={printOpen} onOpenChange={setPrintOpen}>
+        <UIDialog.DialogContent>
+          <UIDialog.DialogHeader>
+            <UIDialog.DialogTitle>طباعة الأسعار</UIDialog.DialogTitle>
+          </UIDialog.DialogHeader>
+          <div className="grid gap-3">
+            <Select value={printCategory} onValueChange={setPrintCategory}>
+              <SelectTrigger>
+                <SelectValue placeholder="اختر الفئة" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={PRIMARY_SENTINEL}>الأساسية (عادي/مسوق/شركات)</SelectItem>
+                {otherCategories.map(c => (
+                  <SelectItem key={c} value={c}>{c}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <UIDialog.DialogFooter>
+            <Button variant="outline" onClick={()=>setPrintOpen(false)}>إلغاء</Button>
+            <Button onClick={handlePrint}>طباعة</Button>
+          </UIDialog.DialogFooter>
+        </UIDialog.DialogContent>
+      </UIDialog.Dialog>
 
       <UIDialog.Dialog open={addCatOpen} onOpenChange={setAddCatOpen}>
         <UIDialog.DialogContent>

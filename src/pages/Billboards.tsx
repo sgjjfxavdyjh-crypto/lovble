@@ -31,16 +31,17 @@ export default function Billboards() {
     setEditing(bb);
     setEditForm({
       Billboard_Name: bb.name || '',
-      City: bb.city || '',
-      Nearest_Landmark: bb.location || '',
-      Size: bb.size || '',
-      Status: bb.status || 'available',
-      Level: bb.level || 'A',
-      Price: bb.price || 0,
-      Contract_Number: (bb as any).contractNumber || '',
-      Customer_Name: (bb as any).clientName || '',
-      Ad_Type: (bb as any).adType || '',
-      Image_URL: bb.image || ''
+      City: (bb as any).City || bb.city || '',
+      Municipality: (bb as any).Municipality || (bb as any).municipality || '',
+      District: (bb as any).District || (bb as any).district || '',
+      Nearest_Landmark: (bb as any).Nearest_Landmark || bb.location || '',
+      Size: (bb as any).Size || bb.size || '',
+      Status: (bb as any).Status || bb.status || 'available',
+      Level: (bb as any).Level || bb.level || 'A',
+      Contract_Number: (bb as any).contractNumber || (bb as any).Contract_Number || '',
+      Customer_Name: (bb as any).clientName || (bb as any).Customer_Name || '',
+      Ad_Type: (bb as any).adType || (bb as any).Ad_Type || '',
+      Image_URL: (bb as any).Image_URL || bb.image || ''
     });
     setEditOpen(true);
   };
@@ -49,7 +50,8 @@ export default function Billboards() {
     if (!editing) return;
     setSaving(true);
     const id = editing.id;
-    const payload = { ...editForm };
+    const { Billboard_Name, City, Municipality, District, Nearest_Landmark, Size, Level, Image_URL } = editForm as any;
+    const payload: any = { Billboard_Name, City, Municipality, District, Nearest_Landmark, Size, Level, Image_URL };
 
     const { error } = await supabase.from('billboards').update(payload).eq('ID', Number(id));
 
@@ -95,7 +97,11 @@ export default function Billboards() {
     }
   };
 
-  const cities = [...new Set(billboards.map(b => b.city))];
+  const cities = [...new Set(billboards.map(b => b.city).filter(Boolean))];
+  const sizes = [...new Set(billboards.map(b => (b as any).Size || b.size).filter(Boolean))];
+  const municipalities = [...new Set(billboards.map(b => (b as any).Municipality || (b as any).municipality).filter(Boolean))];
+  const districts = [...new Set(billboards.map(b => (b as any).District || (b as any).district).filter(Boolean))];
+  const levels = [...new Set(billboards.map(b => (b as any).Level || b.level).filter(Boolean))];
   const filteredBillboards = billboards.filter((billboard) => {
     const matchesSearch = billboard.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          billboard.location.toLowerCase().includes(searchQuery.toLowerCase());
@@ -126,7 +132,7 @@ export default function Billboards() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-foreground">إدارة اللوحات الإعلانية</h1>
-          <p className="text-muted-foreground">عرض وإدارة جميع اللوحات الإعلانية مع إمكانية التعديل والصيانة</p>
+          <p className="text-muted-foreground">عرض وإدارة جميع اللوحات الإعلانية مع إمكانية التعديل والصيا��ة</p>
         </div>
         <Button className="bg-gradient-primary text-white shadow-elegant hover:shadow-glow transition-smooth">
           <Plus className="h-4 w-4 ml-2" />
@@ -304,46 +310,48 @@ export default function Billboards() {
             </div>
             <div>
               <Label>المدينة</Label>
-              <Input value={editForm.City || ''} onChange={(e) => setEditForm((p: any) => ({ ...p, City: e.target.value }))} />
+              <Select value={editForm.City || ''} onValueChange={(v) => setEditForm((p: any) => ({ ...p, City: v }))}>
+                <SelectTrigger><SelectValue placeholder="اختر المدينة" /></SelectTrigger>
+                <SelectContent>
+                  {cities.map((c) => (<SelectItem key={c} value={c as string}>{c}</SelectItem>))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="sm:col-span-2">
               <Label>أقرب معلم</Label>
               <Input value={editForm.Nearest_Landmark || ''} onChange={(e) => setEditForm((p: any) => ({ ...p, Nearest_Landmark: e.target.value }))} />
             </div>
             <div>
-              <Label>المقاس</Label>
-              <Input value={editForm.Size || ''} onChange={(e) => setEditForm((p: any) => ({ ...p, Size: e.target.value }))} />
+              <Label>البلدية</Label>
+              <Input list="municipality-list" value={editForm.Municipality || ''} onChange={(e) => setEditForm((p: any) => ({ ...p, Municipality: e.target.value }))} placeholder="اختر أو اكتب بلدية" />
+              <datalist id="municipality-list">
+                {municipalities.map((m) => (<option key={String(m)} value={String(m)} />))}
+              </datalist>
             </div>
             <div>
-              <Label>الحالة</Label>
-              <Select value={editForm.Status || 'available'} onValueChange={(v) => setEditForm((p: any) => ({ ...p, Status: v }))}>
-                <SelectTrigger><SelectValue placeholder="اختر الحالة" /></SelectTrigger>
+              <Label>المنطقة</Label>
+              <Input list="district-list" value={editForm.District || ''} onChange={(e) => setEditForm((p: any) => ({ ...p, District: e.target.value }))} placeholder="اختر أو اكتب منطقة" />
+              <datalist id="district-list">
+                {districts.map((d) => (<option key={String(d)} value={String(d)} />))}
+              </datalist>
+            </div>
+            <div>
+              <Label>المقاس</Label>
+              <Select value={editForm.Size || ''} onValueChange={(v) => setEditForm((p: any) => ({ ...p, Size: v }))}>
+                <SelectTrigger><SelectValue placeholder="اختر المقاس" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="available">متاح</SelectItem>
-                  <SelectItem value="rented">مؤجر</SelectItem>
-                  <SelectItem value="maintenance">صيانة</SelectItem>
+                  {sizes.map((s) => (<SelectItem key={s} value={s as string}>{s}</SelectItem>))}
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label>المست��ى</Label>
-              <Input value={editForm.Level || ''} onChange={(e) => setEditForm((p: any) => ({ ...p, Level: e.target.value }))} />
-            </div>
-            <div>
-              <Label>السعر</Label>
-              <Input type="number" value={editForm.Price ?? ''} onChange={(e) => setEditForm((p: any) => ({ ...p, Price: Number(e.target.value) }))} />
-            </div>
-            <div>
-              <Label>رقم العقد</Label>
-              <Input value={editForm.Contract_Number || ''} onChange={(e) => setEditForm((p: any) => ({ ...p, Contract_Number: e.target.value }))} />
-            </div>
-            <div>
-              <Label>اسم الزبون</Label>
-              <Input value={editForm.Customer_Name || ''} onChange={(e) => setEditForm((p: any) => ({ ...p, Customer_Name: e.target.value }))} />
-            </div>
-            <div>
-              <Label>نوع الإعلان</Label>
-              <Input value={editForm.Ad_Type || ''} onChange={(e) => setEditForm((p: any) => ({ ...p, Ad_Type: e.target.value }))} />
+              <Label>المستوى</Label>
+              <Select value={editForm.Level || ''} onValueChange={(v) => setEditForm((p: any) => ({ ...p, Level: v }))}>
+                <SelectTrigger><SelectValue placeholder="اختر المستوى" /></SelectTrigger>
+                <SelectContent>
+                  {levels.map((lv) => (<SelectItem key={String(lv)} value={String(lv)}>{String(lv)}</SelectItem>))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="sm:col-span-2">
               <Label>رابط الصورة</Label>

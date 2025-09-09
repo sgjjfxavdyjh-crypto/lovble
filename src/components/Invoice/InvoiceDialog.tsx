@@ -63,7 +63,7 @@ function buildInvoiceHtml(props: Props) {
       .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
       .title{font-weight:800;font-size:26px;letter-spacing:.5px}
       .brand{display:flex;align-items:center;gap:12px}
-      .brand-mark{width:56px;height:56px;border-radius:12px;object-fit:cover}
+      .brand-mark{height:56px;width:auto}
       table{width:100%;border-collapse:collapse}
       th{background:#f7f3e3;color:#000;padding:10px 8px;text-align:right;border-bottom:2px solid #e6d698;font-weight:700}
       td.cell{padding:8px;border-bottom:1px solid #eee;text-align:right;vertical-align:middle}
