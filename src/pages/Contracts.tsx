@@ -637,6 +637,14 @@ export default function Contracts() {
                         </Button>
                         <Button
                           size="sm"
+                          variant="ghost"
+                          onClick={() => openAssignDialog(String(contract.Contract_Number ?? contract.id), contract.customer_id ?? null)}
+                          className="h-8 px-2"
+                        >
+                          تعيين زبون
+                        </Button>
+                        <Button
+                          size="sm"
                           variant="destructive"
                           onClick={() => handleDeleteContract(String(contract.id))}
                           className="h-8 w-8 p-0"
