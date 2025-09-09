@@ -5,11 +5,10 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { toast } from '@/components/ui/sonner';
-import { Plus, Eye, Edit, Trash2, Calendar, User, DollarSign } from 'lucide-react';
+import { Plus, Eye, Edit, Trash2, Calendar, User, DollarSign, Search, Filter, Building, AlertCircle, Clock, CheckCircle } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import {
   createContract,
@@ -33,6 +32,9 @@ export default function Contracts() {
   const [viewOpen, setViewOpen] = useState(false);
   const location = useLocation();
   const [selectedContract, setSelectedContract] = useState<any>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [customerFilter, setCustomerFilter] = useState<string>('all');
   
   const [formData, setFormData] = useState<ContractCreate>({
     customer_name: '',
@@ -44,13 +46,12 @@ export default function Contracts() {
   });
 
   const [bbSearch, setBbSearch] = useState('');
-  const [editBbSearch, setEditBbSearch] = useState('');
 
   const loadData = async () => {
     try {
       const contractsData = await getContracts();
       const billboardsData = await getAvailableBillboards();
-      setContracts(contractsData as any[]);
+      setContracts(contractsData as Contract[]);
       setAvailableBillboards(billboardsData || []);
     } catch (error) {
       console.error('خطأ في تحميل البيانات:', error);
@@ -124,21 +125,94 @@ export default function Contracts() {
 
   const getContractStatus = (contract: Contract) => {
     const today = new Date();
-    const endDate = new Date(contract.end_date);
-    const startDate = new Date(contract.start_date);
+    const endDate = new Date(contract.end_date || '');
+    const startDate = new Date(contract.start_date || '');
+    
+    if (!contract.end_date || !contract.start_date) {
+      return <Badge variant="secondary">غير محدد</Badge>;
+    }
     
     if (today < startDate) {
-      return <Badge className="bg-blue-500 text-white">لم يبدأ</Badge>;
+      return <Badge variant="secondary" className="gap-1">
+        <Clock className="h-3 w-3" />
+        لم يبدأ
+      </Badge>;
     } else if (today > endDate) {
-      return <Badge className="bg-red-500 text-white">منتهي</Badge>;
+      return <Badge variant="destructive" className="gap-1">
+        <AlertCircle className="h-3 w-3" />
+        منتهي
+      </Badge>;
     } else {
       const daysRemaining = Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-      if (daysRemaining <= 7) {
-        return <Badge className="bg-yellow-500 text-white">ينتهي قريب��ً ({daysRemaining} أيام)</Badge>;
+      if (daysRemaining <= 30) {
+        return <Badge className="bg-warning text-warning-foreground border-warning gap-1">
+          <Clock className="h-3 w-3" />
+          ينتهي قريباً ({daysRemaining} أيام)
+        </Badge>;
       }
-      return <Badge className="bg-green-500 text-white">نشط</Badge>;
+      return <Badge className="bg-success text-success-foreground border-success gap-1">
+        <CheckCircle className="h-3 w-3" />
+        نشط
+      </Badge>;
     }
   };
+
+  // تصفية العقود
+  const filteredContracts = contracts.filter(contract => {
+    const matchesSearch = 
+      contract.customer_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      ((contract as any)['Ad Type'] || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      String(contract.id || '').includes(searchQuery);
+
+    const matchesCustomer = customerFilter === 'all' || contract.customer_name === customerFilter;
+    
+    if (statusFilter === 'all') return matchesSearch && matchesCustomer;
+    
+    const today = new Date();
+    const endDate = new Date(contract.end_date || '');
+    const startDate = new Date(contract.start_date || '');
+    
+    if (!contract.end_date || !contract.start_date) return false;
+    
+    let matchesStatus = false;
+    if (statusFilter === 'active') {
+      matchesStatus = today >= startDate && today <= endDate;
+    } else if (statusFilter === 'expired') {
+      matchesStatus = today > endDate;
+    } else if (statusFilter === 'upcoming') {
+      matchesStatus = today < startDate;
+    } else if (statusFilter === 'expiring') {
+      const daysRemaining = Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+      matchesStatus = daysRemaining <= 30 && daysRemaining > 0;
+    }
+
+    return matchesSearch && matchesCustomer && matchesStatus;
+  });
+
+  // تقسيم العقود حسب الحالة
+  const contractStats = {
+    total: contracts.length,
+    active: contracts.filter(c => {
+      if (!c.end_date || !c.start_date) return false;
+      const today = new Date();
+      const endDate = new Date(c.end_date);
+      const startDate = new Date(c.start_date);
+      return today >= startDate && today <= endDate;
+    }).length,
+    expired: contracts.filter(c => {
+      if (!c.end_date) return false;
+      return new Date() > new Date(c.end_date);
+    }).length,
+    expiring: contracts.filter(c => {
+      if (!c.end_date) return false;
+      const today = new Date();
+      const endDate = new Date(c.end_date);
+      const daysRemaining = Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+      return daysRemaining <= 30 && daysRemaining > 0;
+    }).length
+  };
+
+  const uniqueCustomers = [...new Set(contracts.map(c => c.customer_name))].filter(Boolean);
 
   if (loading) {
     return (
@@ -163,12 +237,12 @@ export default function Contracts() {
     .filter(Boolean)) as Billboard[];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" dir="rtl">
       {/* العنوان والأزرار */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-foreground">إدارة العقود</h1>
-          <p className="text-muted-foreground">إنشاء وإدارة عقود الإيجار مع اللوحات الإ��لانية</p>
+          <p className="text-muted-foreground">إنشاء وإدارة عقود الإيجار مع اللوحات الإعلانية</p>
         </div>
         <Dialog open={createOpen} onOpenChange={setCreateOpen}>
           <DialogTrigger asChild>
@@ -252,12 +326,12 @@ export default function Contracts() {
                           <Button
                             size="sm"
                             variant="outline"
-                            disabled={formData.billboard_ids.includes(b.id)}
+                            disabled={formData.billboard_ids.includes(b.id || '')}
                             onClick={() => setFormData({
                               ...formData,
-                              billboard_ids: formData.billboard_ids.includes(b.id)
+                              billboard_ids: formData.billboard_ids.includes(b.id || '')
                                 ? formData.billboard_ids
-                                : [...formData.billboard_ids, b.id]
+                                : [...formData.billboard_ids, b.id || '']
                             })}
                           >
                             إضافة
@@ -312,12 +386,121 @@ export default function Contracts() {
         </Dialog>
       </div>
 
+      {/* إحصائيات سريعة */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card className="bg-gradient-card border-0 shadow-card">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-primary/10 rounded-lg">
+                <Calendar className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">إجمالي العقود</p>
+                <p className="text-2xl font-bold text-foreground">{contractStats.total}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-card border-0 shadow-card">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-success/10 rounded-lg">
+                <CheckCircle className="h-6 w-6 text-success" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">عقود نشطة</p>
+                <p className="text-2xl font-bold text-success">{contractStats.active}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-card border-0 shadow-card">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-warning/10 rounded-lg">
+                <Clock className="h-6 w-6 text-warning" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">قريبة الانتهاء</p>
+                <p className="text-2xl font-bold text-warning">{contractStats.expiring}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-card border-0 shadow-card">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-destructive/10 rounded-lg">
+                <AlertCircle className="h-6 w-6 text-destructive" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">عقود منتهية</p>
+                <p className="text-2xl font-bold text-destructive">{contractStats.expired}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* البحث والفلاتر */}
+      <Card className="bg-gradient-card border-0 shadow-card">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Filter className="h-5 w-5 text-primary" />
+            البحث والتصفية
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="relative">
+              <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="ابحث في العقود..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pr-10"
+              />
+            </div>
+            
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="حالة العقد" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">جميع الحالات</SelectItem>
+                <SelectItem value="active">نشطة</SelectItem>
+                <SelectItem value="expiring">قريبة الانتهاء</SelectItem>
+                <SelectItem value="expired">منتهية</SelectItem>
+                <SelectItem value="upcoming">لم تبدأ</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={customerFilter} onValueChange={setCustomerFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="العميل" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">جميع العملاء</SelectItem>
+                {uniqueCustomers.map(customer => (
+                  <SelectItem key={customer} value={customer}>
+                    {customer}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* جدول العقود */}
       <Card className="bg-gradient-card border-0 shadow-card">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Calendar className="h-5 w-5 text-primary" />
-            قائمة العقود ({contracts.length})
+            قائمة العقود ({filteredContracts.length} من {contracts.length})
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -335,13 +518,20 @@ export default function Contracts() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {contracts.map((contract) => (
-                  <TableRow key={contract.id}>
+                {filteredContracts.map((contract) => (
+                  <TableRow key={contract.id} className="hover:bg-card/50 transition-colors">
                     <TableCell className="font-medium">{contract.customer_name}</TableCell>
-                    <TableCell>{contract.ad_type || (contract as any)['Ad Type'] || 'غير محدد'}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="gap-1">
+                        <Building className="h-3 w-3" />
+                        {(contract as any)['Ad Type'] || 'غير محدد'}
+                      </Badge>
+                    </TableCell>
                     <TableCell>{contract.start_date ? new Date(contract.start_date).toLocaleDateString('ar') : '—'}</TableCell>
                     <TableCell>{contract.end_date ? new Date(contract.end_date).toLocaleDateString('ar') : '—'}</TableCell>
-                    <TableCell>{(contract.rent_cost || 0).toLocaleString()} د.ل</TableCell>
+                    <TableCell className="font-semibold text-primary">
+                      {(contract.rent_cost || 0).toLocaleString()} د.ل
+                    </TableCell>
                     <TableCell>{getContractStatus(contract)}</TableCell>
                     <TableCell>
                       <div className="flex gap-2">
@@ -349,13 +539,23 @@ export default function Contracts() {
                           size="sm"
                           variant="outline"
                           onClick={() => handleViewContract(String(contract.id))}
+                          className="h-8 w-8 p-0"
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
                         <Button
                           size="sm"
+                          variant="outline"
+                          onClick={() => {/* Navigate to edit */}}
+                          className="h-8 w-8 p-0"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="sm"
                           variant="destructive"
                           onClick={() => handleDeleteContract(String(contract.id))}
+                          className="h-8 w-8 p-0"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -367,6 +567,14 @@ export default function Contracts() {
             </Table>
           </div>
           
+          {filteredContracts.length === 0 && contracts.length > 0 && (
+            <div className="text-center py-8">
+              <Search className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-foreground mb-2">لا توجد نتائج</h3>
+              <p className="text-muted-foreground">لم يتم العثور على عقود تطابق معايير البحث</p>
+            </div>
+          )}
+
           {contracts.length === 0 && (
             <div className="text-center py-8">
               <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
@@ -412,124 +620,33 @@ export default function Contracts() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2">
-                      <p><strong>تاريخ البداية:</strong> {new Date(selectedContract.start_date).toLocaleDateString('ar')}</p>
-                      <p><strong>تاريخ النهاية:</strong> {new Date(selectedContract.end_date).toLocaleDateString('ar')}</p>
-                      <p><strong>التكلفة:</strong> {selectedContract.rent_cost?.toLocaleString()} د.ل</p>
+                      <p><strong>تاريخ البداية:</strong> {selectedContract.start_date ? new Date(selectedContract.start_date).toLocaleDateString('ar') : '—'}</p>
+                      <p><strong>تاريخ النهاية:</strong> {selectedContract.end_date ? new Date(selectedContract.end_date).toLocaleDateString('ar') : '—'}</p>
+                      <p><strong>التكلفة الإجمالية:</strong> {(selectedContract.rent_cost || 0).toLocaleString()} د.ل</p>
                     </div>
                   </CardContent>
                 </Card>
               </div>
 
               {/* اللوحات المرتبطة */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>اللوحات المرتبطة بالعقد ({selectedContract.billboards?.length || 0})</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {selectedContract.billboards && selectedContract.billboards.length > 0 ? (
+              {selectedContract.billboards && selectedContract.billboards.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">اللوحات المرتبطة ({selectedContract.billboards.length})</CardTitle>
+                  </CardHeader>
+                  <CardContent>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                       {selectedContract.billboards.map((billboard: any) => (
-                        <Card key={billboard.ID || billboard.id} className="border">
-                          <CardContent className="p-4 flex items-center justify-between gap-3">
-                            <div>
-                              <h4 className="font-semibold">{billboard.Billboard_Name || billboard.name}</h4>
-                              <p className="text-sm text-muted-foreground">{billboard.Nearest_Landmark || billboard.location}</p>
-                              <p className="text-sm">الحجم: {billboard.Size || billboard.size}</p>
-                              <p className="text-sm">المدينة: {billboard.City || billboard.city}</p>
-                            </div>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={async () => {
-                                try {
-                                  const contractNumber = String(selectedContract.Contract_Number ?? selectedContract['Contract Number'] ?? selectedContract.id);
-                                  await removeBillboardFromContract(contractNumber, billboard.ID || billboard.id);
-                                  toast.success('تم إزالة اللوحة من العقد');
-                                  const refreshed = await getContractWithBillboards(contractNumber);
-                                  setSelectedContract(refreshed);
-                                  const av = await getAvailableBillboards();
-                                  setAvailableBillboards(av || []);
-                                } catch (e) {
-                                  console.error(e);
-                                  toast.error('فشل إزالة اللوحة');
-                                }
-                              }}
-                            >
-                              إزالة
-                            </Button>
-                          </CardContent>
-                        </Card>
+                        <div key={billboard.ID} className="border rounded-lg p-4">
+                          <h4 className="font-semibold">{billboard.Billboard_Name}</h4>
+                          <p className="text-sm text-muted-foreground">{billboard.Nearest_Landmark}</p>
+                          <p className="text-xs">{billboard.City} • {billboard.Size}</p>
+                        </div>
                       ))}
                     </div>
-                  ) : (
-                    <p className="text-muted-foreground">لا توجد لوحات مرتبطة بهذا العقد</p>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* التعديل: إضافة لوحات أثناء سريان العقد */}
-              {(() => {
-                const today = new Date();
-                const start = selectedContract.start_date ? new Date(selectedContract.start_date) : (selectedContract['Contract Date'] ? new Date(selectedContract['Contract Date']) : null);
-                const end = selectedContract.end_date ? new Date(selectedContract.end_date) : (selectedContract['End Date'] ? new Date(selectedContract['End Date']) : null);
-                const active = start && end && today >= start && today <= end;
-                if (!active) return null;
-                const filtered = (availableBillboards || []).filter((b) => {
-                  const q = editBbSearch.trim().toLowerCase();
-                  if (!q) return true;
-                  return [b.Billboard_Name, b.Nearest_Landmark, b.City, b.Size]
-                    .some((v: any) => String(v || '').toLowerCase().includes(q));
-                });
-                return (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-base">إضافة لوحات إلى العقد (نشط)</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="mb-3">
-                        <Input placeholder="بحث عن لوحة..." value={editBbSearch} onChange={(e) => setEditBbSearch(e.target.value)} />
-                      </div>
-                      <div className="max-h-96 overflow-auto space-y-2">
-                        {filtered.map((b: any) => (
-                          <div key={b.ID} className="flex items-center justify-between rounded-lg border p-3">
-                            <div>
-                              <div className="font-medium">{b.Billboard_Name}</div>
-                              <div className="text-xs text-muted-foreground">{b.Nearest_Landmark} • {b.Size}</div>
-                            </div>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={async () => {
-                                try {
-                                  const contractNumber = String(selectedContract.Contract_Number ?? selectedContract['Contract Number'] ?? selectedContract.id);
-                                  await addBillboardsToContract(contractNumber, [b.ID], {
-                                    start_date: selectedContract.start_date || selectedContract['Contract Date'],
-                                    end_date: selectedContract.end_date || selectedContract['End Date'],
-                                    customer_name: selectedContract.customer_name || selectedContract['Customer Name'] || '',
-                                  });
-                                  toast.success('تم إضافة اللوحة إلى العقد');
-                                  const refreshed = await getContractWithBillboards(contractNumber);
-                                  setSelectedContract(refreshed);
-                                  const av = await getAvailableBillboards();
-                                  setAvailableBillboards(av || []);
-                                } catch (e) {
-                                  console.error(e);
-                                  toast.error('فشل إضافة اللوحة');
-                                }
-                              }}
-                            >
-                              إضافة
-                            </Button>
-                          </div>
-                        ))}
-                        {filtered.length === 0 && (
-                          <p className="text-sm text-muted-foreground">لا توجد لوحات متاحة مطابقة</p>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })()}
+                  </CardContent>
+                </Card>
+              )}
             </div>
           )}
         </DialogContent>

@@ -226,21 +226,31 @@ export default function ContractEdit() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-6" dir="rtl">
-      <div className="flex items-center justify-between mb-4">
-        <h1 className="text-2xl font-bold">تعديل عقد {contractNumber && `#${contractNumber}`}</h1>
+    <div className="container mx-auto px-4 py-6 space-y-6" dir="rtl">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">تعديل عقد {contractNumber && `#${contractNumber}`}</h1>
+          <p className="text-muted-foreground">تعديل تفاصيل العقد واللوحات المرتبطة به</p>
+        </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => navigate('/admin/contracts')}>عودة</Button>
-          <Button onClick={save}>حفظ</Button>
+          <Button variant="outline" onClick={() => navigate('/admin/contracts')}>
+            عودة
+          </Button>
+          <Button onClick={save} className="bg-gradient-primary text-white shadow-elegant hover:shadow-glow transition-smooth">
+            حفظ التعديلات
+          </Button>
         </div>
       </div>
       <div className="flex flex-col lg:flex-row gap-6">
         {/* main area */}
         <div className="flex-1 space-y-6">
           {/* selected on top */}
-          <Card>
+          <Card className="bg-gradient-card border-0 shadow-card">
             <CardHeader>
-              <CardTitle>اللوحات المرتبطة ({selected.length})</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <Calendar className="h-5 w-5 text-primary" />
+                اللوحات المرتبطة ({selected.length})
+              </CardTitle>
             </CardHeader>
             <CardContent>
               {selected.length === 0 ? (
@@ -281,8 +291,14 @@ export default function ContractEdit() {
           </Card>
 
           {/* filters */}
-          <Card>
-            <CardContent className="p-4">
+          <Card className="bg-gradient-card border-0 shadow-card">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Search className="h-5 w-5 text-primary" />
+                البحث والتصفية
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
               <div className="flex flex-wrap items-center gap-3">
                 <div className="flex-1 relative min-w-[220px]">
                   <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -314,9 +330,12 @@ export default function ContractEdit() {
           </Card>
 
           {/* grid below */}
-          <Card>
+          <Card className="bg-gradient-card border-0 shadow-card">
             <CardHeader>
-              <CardTitle>كل اللوحات</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <Calendar className="h-5 w-5 text-primary" />
+                كل اللوحات ({filtered.length})
+              </CardTitle>
             </CardHeader>
             <CardContent>
               {loading ? (
@@ -357,9 +376,12 @@ export default function ContractEdit() {
 
         {/* sidebar */}
         <div className="w-full lg:w-[360px] space-y-4">
-          <Card>
+          <Card className="bg-gradient-card border-0 shadow-card">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2"><User className="h-5 w-5" /> بيانات الزبون</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <User className="h-5 w-5 text-primary" /> 
+                بيانات الزبون
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <div>
@@ -436,9 +458,12 @@ export default function ContractEdit() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="bg-gradient-card border-0 shadow-card">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2"><Calendar className="h-5 w-5" /> المدة</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <Calendar className="h-5 w-5 text-primary" /> 
+                المدة والتواريخ
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <div>

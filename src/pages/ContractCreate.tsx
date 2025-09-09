@@ -162,14 +162,32 @@ export default function ContractCreate() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-6" dir="rtl">
+    <div className="container mx-auto px-4 py-6 space-y-6" dir="rtl">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">إنشاء عقد جديد</h1>
+          <p className="text-muted-foreground">إنشاء عقد إيجار جديد مع تحديد اللوحات والشروط</p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => navigate('/admin/contracts')}>
+            إلغاء
+          </Button>
+          <Button onClick={submit} className="bg-gradient-primary text-white shadow-elegant hover:shadow-glow transition-smooth">
+            إنشاء العقد
+          </Button>
+        </div>
+      </div>
+
       <div className="flex flex-col lg:flex-row gap-6">
         {/* main area */}
         <div className="flex-1 space-y-6">
           {/* selected on top */}
-          <Card>
+          <Card className="bg-gradient-card border-0 shadow-card">
             <CardHeader>
-              <CardTitle>اللوحات المختارة ({selected.length})</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <Calendar className="h-5 w-5 text-primary" />
+                اللوحات المختارة ({selected.length})
+              </CardTitle>
             </CardHeader>
             <CardContent>
               {selected.length === 0 ? (
@@ -210,8 +228,14 @@ export default function ContractCreate() {
           </Card>
 
           {/* filters */}
-          <Card>
-            <CardContent className="p-4">
+          <Card className="bg-gradient-card border-0 shadow-card">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Search className="h-5 w-5 text-primary" />
+                البحث والتصفية
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
               <div className="flex flex-wrap items-center gap-3">
                 <div className="flex-1 relative min-w-[220px]">
                   <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -243,9 +267,12 @@ export default function ContractCreate() {
           </Card>
 
           {/* all billboards below */}
-          <Card>
+          <Card className="bg-gradient-card border-0 shadow-card">
             <CardHeader>
-              <CardTitle>كل اللوحات ({filtered.length})</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <Calendar className="h-5 w-5 text-primary" />
+                كل اللوحات ({filtered.length})
+              </CardTitle>
             </CardHeader>
             <CardContent>
               {loading ? (
@@ -286,9 +313,12 @@ export default function ContractCreate() {
 
         {/* sidebar */}
         <div className="w-full lg:w-[360px] space-y-4">
-          <Card>
+          <Card className="bg-gradient-card border-0 shadow-card">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2"><User className="h-5 w-5" /> بيانات الزبون</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <User className="h-5 w-5 text-primary" /> 
+                بيانات الزبون
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <div>
@@ -365,9 +395,12 @@ export default function ContractCreate() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="bg-gradient-card border-0 shadow-card">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2"><Calendar className="h-5 w-5" /> المدة</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <Calendar className="h-5 w-5 text-primary" /> 
+                المدة والتواريخ
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <div>
