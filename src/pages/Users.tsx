@@ -57,6 +57,10 @@ export default function Users() {
   const [hasPermissions, setHasPermissions] = useState<boolean>(true);
   const [permOpenId, setPermOpenId] = useState<string | null>(null);
   const [allClients, setAllClients] = useState<string[]>([]);
+  const [passwordModalOpen, setPasswordModalOpen] = useState(false);
+  const [passwordTargetId, setPasswordTargetId] = useState<string | null>(null);
+  const [passwordNew, setPasswordNew] = useState('');
+  const [passwordConfirm, setPasswordConfirm] = useState('');
 
   const fetchPage = async (pageIndex: number) => {
     setLoading(true);
