@@ -106,34 +106,51 @@ export default function Customers() {
 
   const totalAllPaid = payments.reduce((s, p) => s + (Number(p.amount) || 0), 0);
 
-  const openCustomer = (id: string) => {
+  const [detailsContracts, setDetailsContracts] = useState<ContractRow[]>([]);
+  const [detailsPayments, setDetailsPayments] = useState<PaymentRow[]>([]);
+
+  const openCustomer = async (id: string) => {
     setSelectedCustomer(id);
     setDialogOpen(true);
+
+    // determine if id is a name-key or uuid
+    if (id.startsWith('name:')) {
+      const name = id.slice(5);
+      const { data: cRes } = await supabase.from('Contract').select('Contract_Number, "Customer Name", "Total Rent", "Contract Date", "Start Date", "End Date"').eq('Customer Name', name);
+      const { data: pRes } = await supabase.from('customer_payments').select('id,customer_id,customer_name,contract_number,amount,method,reference,notes,paid_at,entry_type').eq('customer_name', name).order('paid_at', { ascending: false });
+      setDetailsContracts((cRes || []) as any);
+      setDetailsPayments((pRes || []) as any);
+    } else {
+      const cust = customers.find(x => x.id === id);
+      const name = cust?.name || null;
+      const { data: cRes } = await supabase.from('Contract').select('Contract_Number, "Customer Name", "Total Rent", "Contract Date", "Start Date", "End Date", customer_id').eq('customer_id', id);
+      const { data: pRes } = await supabase.from('customer_payments').select('id,customer_id,customer_name,contract_number,amount,method,reference,notes,paid_at,entry_type').eq('customer_id', id).order('paid_at', { ascending: false });
+      // fallback to name-match if none
+      if ((!cRes || (cRes || []).length === 0) && name) {
+        const { data: cByName } = await supabase.from('Contract').select('Contract_Number, "Customer Name", "Total Rent", "Contract Date", "Start Date", "End Date", customer_id').eq('Customer Name', name);
+        setDetailsContracts((cByName || []) as any);
+      } else {
+        setDetailsContracts((cRes || []) as any);
+      }
+
+      if ((!pRes || (pRes || []).length === 0) && name) {
+        const { data: pByName } = await supabase.from('customer_payments').select('id,customer_id,customer_name,contract_number,amount,method,reference,notes,paid_at,entry_type').eq('customer_name', name).order('paid_at', { ascending: false });
+        setDetailsPayments((pByName || []) as any);
+      } else {
+        setDetailsPayments((pRes || []) as any);
+      }
+    }
   };
 
   const closeDialog = () => {
     setDialogOpen(false);
     setSelectedCustomer(null);
+    setDetailsContracts([]);
+    setDetailsPayments([]);
   };
 
-  const customerContracts = useMemo(() => {
-    if (!selectedCustomer) return [] as ContractRow[];
-    return contracts.filter(c => {
-      const cid = (c as any).customer_id ?? null;
-      if (cid) return String(cid) === selectedCustomer;
-      return ((c['Customer Name'] || '').toString()) === selectedCustomer || (`name:${(c['Customer Name']||'').toString()}`) === selectedCustomer;
-    });
-  }, [selectedCustomer, contracts]);
-
-  const customerPayments = useMemo(() => {
-    if (!selectedCustomer) return [] as PaymentRow[];
-    return payments.filter(p => {
-      const cid = (p.customer_id || null) as string | null;
-      if (cid) return String(cid) === selectedCustomer;
-      // fallback to name-key
-      return (`name:${(p.customer_name||'').toString()}`) === selectedCustomer || (p.customer_name && p.customer_name === (customers.find(x=>x.id===selectedCustomer)?.name));
-    }).sort((a,b)=> (b.paid_at||'').localeCompare(a.paid_at||''));
-  }, [selectedCustomer, payments, customers]);
+  const customerContracts = detailsContracts;
+  const customerPayments = detailsPayments;
 
   const printReceipt = (payment: PaymentRow) => {
     const html = `
@@ -173,7 +190,7 @@ export default function Customers() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
             <Input placeholder="ابحث بالزبون" value={search} onChange={(e)=>setSearch(e.target.value)} />
             <div></div>
-            <div className="flex items-center text-sm text-muted-foreground">إجمالي المدفوعات: {totalAllPaid.toLocaleString('ar-LY')} د.ل</div>
+            <div className="flex items-center text-sm text-muted-foreground">��جمالي المدفوعات: {totalAllPaid.toLocaleString('ar-LY')} د.ل</div>
           </div>
 
           <div className="overflow-x-auto">
