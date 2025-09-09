@@ -62,13 +62,22 @@ const handler: Handler = async (event) => {
     const { data: allContracts, error: contractErr } = await supabase.from('Contract').select('Contract_Number, "Customer Name", customer_id');
     if (contractErr) return { statusCode: 500, body: JSON.stringify({ error: contractErr.message }) };
 
-    const contractsToFix = (allContracts || []).filter((c: any) => c.customer_id === null || String(c.customer_id || '').trim() === '');
+    const contractsArray = (allContracts || []) as any[];
+    const contractsToFix = contractsArray.filter((c: any) => c.customer_id === null || String(c.customer_id || '').trim() === '');
+    const allCustomerIds = new Set((customers || []).map((c:any) => String(c.id)));
+    const contractsWithBadId = contractsArray.filter((c:any) => c.customer_id && !allCustomerIds.has(String(c.customer_id)));
 
     const results: any = {
-      totalChecked: contractsToFix.length,
+      totalContracts: contractsArray.length,
+      contractsWithoutCustomerId: contractsToFix.length,
+      contractsWithInvalidCustomerId: contractsWithBadId.length,
       updated: 0,
       createdCustomers: 0,
       notMatched: [] as string[],
+      samples: {
+        withoutCustomerId: contractsToFix.slice(0, 10),
+        withInvalidId: contractsWithBadId.slice(0, 10)
+      }
     };
 
     // build map of normalized customer name -> customer
@@ -91,7 +100,7 @@ const handler: Handler = async (event) => {
         const { data: upd, error: updErr } = await supabase.from('Contract').update({ customer_id: matched.id }).eq('Contract_Number', contract.Contract_Number).select('Contract_Number');
         if (!updErr && upd && (upd as any[]).length > 0) results.updated += (upd as any[]).length;
       } else {
-        unmatchedNames.add(cnameRaw.trim());
+        unmatchedNames.add(String(cnameRaw).trim());
       }
     }
 
