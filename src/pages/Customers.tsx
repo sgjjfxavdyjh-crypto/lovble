@@ -31,19 +31,22 @@ interface ContractRow {
 export default function Customers() {
   const [payments, setPayments] = useState<PaymentRow[]>([]);
   const [contracts, setContracts] = useState<ContractRow[]>([]);
+  const [customers, setCustomers] = useState<{id:string; name:string}[]>([]);
   const [search, setSearch] = useState('');
   const [selectedCustomer, setSelectedCustomer] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 
   useEffect(() => {
     (async () => {
-      const [pRes, cRes] = await Promise.all([
+      const [pRes, cRes, cuRes] = await Promise.all([
         supabase.from('customer_payments').select('id,customer_id,customer_name,contract_number,amount,method,reference,notes,paid_at,entry_type').order('paid_at', { ascending: false }),
-        supabase.from('Contract').select('Contract_Number, "Customer Name", "Total Rent", "Contract Date", "Start Date", "End Date"')
+        supabase.from('Contract').select('Contract_Number, "Customer Name", "Total Rent", "Contract Date", "Start Date", "End Date", customer_id'),
+        supabase.from('customers').select('id,name').order('name', { ascending: true })
       ]);
 
       if (!pRes.error) setPayments((pRes.data || []) as any);
       if (!cRes.error) setContracts((cRes.data || []) as any);
+      if (!cuRes.error) setCustomers((cuRes.data || []) as any);
     })();
   }, []);
 
