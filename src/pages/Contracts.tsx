@@ -33,6 +33,7 @@ export default function Contracts() {
   const [loading, setLoading] = useState(true);
   const [createOpen, setCreateOpen] = useState(false);
   const [viewOpen, setViewOpen] = useState(false);
+  const [printing, setPrinting] = useState<string | null>(null);
   const location = useLocation();
   const navigate = useNavigate();
   const [selectedContract, setSelectedContract] = useState<any>(null);
@@ -165,7 +166,7 @@ export default function Contracts() {
     const customer = customersList.find(c => c.id === assignCustomerId);
     try {
       await updateContract(assignContractNumber, { customer_id: assignCustomerId, 'Customer Name': customer?.name || '' });
-      toast.success('تم تحديث العميل للعقد');
+      toast.success('تم تحديث العميل لل��قد');
       setAssignOpen(false);
       setAssignContractNumber(null);
       setAssignCustomerId(null);
@@ -354,7 +355,7 @@ export default function Contracts() {
                       <div>
                         <Label>ا��فئة السعرية</Label>
                         <Select value={pricingCategory} onValueChange={(v)=>setPricingCategory(v as CustomerType)}>
-                          <SelectTrigger><SelectValue placeholder="الفئة" /></SelectTrigger>
+                          <SelectTrigger><SelectValue placeholder="��لفئة" /></SelectTrigger>
                           <SelectContent>
                             {CUSTOMERS.map(c => (<SelectItem key={c} value={c}>{c}</SelectItem>))}
                           </SelectContent>
