@@ -20,6 +20,7 @@ import InstallationPricing from "./pages/InstallationPricing";
 import Customers from "./pages/Customers";
 import BookingRequests from "./pages/BookingRequests";
 import SharedBillboards from "./pages/SharedBillboards";
+import SharedCompanies from "./pages/SharedCompanies";
 import { MainLayout } from "@/components/Layout/MainLayout";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 
