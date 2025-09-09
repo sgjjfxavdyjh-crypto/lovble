@@ -42,6 +42,7 @@ export default function Customers() {
   const [customerNameInput, setCustomerNameInput] = useState('');
   const [customerPhoneInput, setCustomerPhoneInput] = useState('');
   const [customerCompanyInput, setCustomerCompanyInput] = useState('');
+  const [syncing, setSyncing] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -210,7 +211,7 @@ export default function Customers() {
           <p><strong>المرجع:</strong> ${payment.reference || '—'}</p>
           <p><strong>التاريخ:</strong> ${payment.paid_at ? new Date(payment.paid_at).toLocaleString('ar-LY') : ''}</p>
           <hr />
-          <p>شكراً لتعاملكم.</p>
+          <p>شكر��ً لتعاملكم.</p>
         </div>
         <script>window.print();</script>
       </body></html>`;
