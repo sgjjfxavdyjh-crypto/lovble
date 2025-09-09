@@ -113,34 +113,56 @@ export default function Customers() {
     setSelectedCustomer(id);
     setDialogOpen(true);
 
-    // determine if id is a name-key or uuid
-    if (id.startsWith('name:')) {
-      const name = id.slice(5);
-      const { data: cRes } = await supabase.from('Contract').select('Contract_Number, "Customer Name", "Total Rent", "Contract Date", "Start Date", "End Date"').eq('Customer Name', name);
-      const { data: pRes } = await supabase.from('customer_payments').select('id,customer_id,customer_name,contract_number,amount,method,reference,notes,paid_at,entry_type').eq('customer_name', name).order('paid_at', { ascending: false });
-      setDetailsContracts((cRes || []) as any);
-      setDetailsPayments((pRes || []) as any);
-    } else {
+    try {
+      // First fetch payments for this customer (by id), fallback to name
+      let pRes: any = await supabase.from('customer_payments').select('id,customer_id,customer_name,contract_number,amount,method,reference,notes,paid_at,entry_type').eq('customer_id', id).order('paid_at', { ascending: false });
+      let paymentsData = pRes.data || [];
+
+      // determine customer name if available
       const cust = customers.find(x => x.id === id);
       const name = cust?.name || null;
-      const { data: cRes } = await supabase.from('Contract').select('Contract_Number, "Customer Name", "Total Rent", "Contract Date", "Start Date", "End Date", customer_id').eq('customer_id', id);
-      const { data: pRes } = await supabase.from('customer_payments').select('id,customer_id,customer_name,contract_number,amount,method,reference,notes,paid_at,entry_type').eq('customer_id', id).order('paid_at', { ascending: false });
-      // fallback to name-match if none
-      if ((!cRes || (cRes || []).length === 0) && name) {
-        const { data: cByName } = await supabase.from('Contract').select('Contract_Number, "Customer Name", "Total Rent", "Contract Date", "Start Date", "End Date", customer_id').eq('Customer Name', name);
-        setDetailsContracts((cByName || []) as any);
-      } else {
-        setDetailsContracts((cRes || []) as any);
+
+      if ((!paymentsData || paymentsData.length === 0) && name) {
+        const pByName = await supabase.from('customer_payments').select('id,customer_id,customer_name,contract_number,amount,method,reference,notes,paid_at,entry_type').ilike('customer_name', name).order('paid_at', { ascending: false });
+        paymentsData = pByName.data || [];
       }
 
-      if ((!pRes || (pRes || []).length === 0) && name) {
-        const { data: pByName } = await supabase.from('customer_payments').select('id,customer_id,customer_name,contract_number,amount,method,reference,notes,paid_at,entry_type').eq('customer_name', name).order('paid_at', { ascending: false });
-        setDetailsPayments((pByName || []) as any);
-      } else {
-        setDetailsPayments((pRes || []) as any);
+      setDetailsPayments(paymentsData);
+
+      // collect contract numbers from payments
+      const contractNumbers = Array.from(new Set((paymentsData || []).map((p:any)=>p.contract_number).filter(Boolean)));
+
+      // fetch contracts by customer_id, and also by name and contract numbers as fallback
+      const contractsById = await supabase.from('Contract').select('Contract_Number, "Customer Name", "Total Rent", "Contract Date", "Start Date", "End Date", customer_id').eq('customer_id', id);
+      let contractsData: any[] = contractsById.data || [];
+
+      if ((contractsData || []).length === 0 && name) {
+        const byName = await supabase.from('Contract').select('Contract_Number, "Customer Name", "Total Rent", "Contract Date", "Start Date", "End Date", customer_id').ilike('Customer Name', name);
+        contractsData = byName.data || [];
       }
+
+      if ((contractsData || []).length === 0 && contractNumbers.length > 0) {
+        // attempt fetching by contract numbers
+        const byNumbers = await supabase.from('Contract').select('Contract_Number, "Customer Name", "Total Rent", "Contract Date", "Start Date", "End Date", customer_id').in('Contract_Number', contractNumbers);
+        contractsData = byNumbers.data || [];
+      }
+
+      // dedupe by Contract_Number
+      const seen = new Set();
+      const deduped = [] as any[];
+      for (const c of contractsData) {
+        const key = String(c.Contract_Number || c['Contract Number'] || JSON.stringify(c));
+        if (!seen.has(key)) { seen.add(key); deduped.push(c); }
+      }
+
+      setDetailsContracts(deduped);
+    } catch (e) {
+      console.warn('openCustomer error', e);
+      setDetailsContracts([]);
+      setDetailsPayments([]);
     }
   };
+
 
   const closeDialog = () => {
     setDialogOpen(false);
@@ -190,7 +212,7 @@ export default function Customers() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
             <Input placeholder="ابحث بالزبون" value={search} onChange={(e)=>setSearch(e.target.value)} />
             <div></div>
-            <div className="flex items-center text-sm text-muted-foreground">��جمالي المدفوعات: {totalAllPaid.toLocaleString('ar-LY')} د.ل</div>
+            <div className="flex items-center text-sm text-muted-foreground">إجمالي المدفوعات: {totalAllPaid.toLocaleString('ar-LY')} د.ل</div>
           </div>
 
           <div className="overflow-x-auto">
