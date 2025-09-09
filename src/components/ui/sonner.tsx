@@ -32,9 +32,16 @@ function formatArg(arg: any) {
   if (arg && typeof arg === 'object') {
     if (typeof arg.message === 'string') return arg.message;
     try {
-      return JSON.stringify(arg);
-    } catch {
-      return String(arg);
+      const seen = new WeakSet();
+      return JSON.stringify(arg, function (_key, value) {
+        if (value && typeof value === 'object') {
+          if (seen.has(value)) return '[Circular]';
+          seen.add(value);
+        }
+        return value;
+      });
+    } catch (err) {
+      try { return String(arg); } catch { return '[object]'; }
     }
   }
   return String(arg);
