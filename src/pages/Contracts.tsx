@@ -24,6 +24,7 @@ import {
   ContractCreate
 } from '@/services/contractService';
 import { Billboard } from '@/types';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function Contracts() {
   const [contracts, setContracts] = useState<Contract[]>([]);
@@ -305,7 +306,7 @@ export default function Contracts() {
                         />
                       </div>
                       <div>
-                        <Label>نوع الإعلان</Label>
+                        <Label>ن��ع الإعلان</Label>
                         <Input
                           value={formData.ad_type}
                           onChange={(e) => setFormData({ ...formData, ad_type: e.target.value })}
@@ -351,7 +352,7 @@ export default function Contracts() {
                   </Card>
                 </div>
 
-                {/* العمود الأيمن: اللوحات */}
+                {/* العمود ال��يمن: اللوحات */}
                 <div className="md:col-span-2 space-y-4">
                   <Card className="border">
                     <CardHeader>
