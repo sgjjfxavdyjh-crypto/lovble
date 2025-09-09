@@ -36,6 +36,11 @@ export default function Customers() {
   const [selectedCustomer, setSelectedCustomer] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 
+  // add/edit customer states
+  const [newCustomerOpen, setNewCustomerOpen] = useState(false);
+  const [editingCustomerId, setEditingCustomerId] = useState<string | null>(null);
+  const [customerNameInput, setCustomerNameInput] = useState('');
+
   useEffect(() => {
     (async () => {
       const [pRes, cRes, cuRes] = await Promise.all([
@@ -203,7 +208,7 @@ export default function Customers() {
           <p><strong>المرجع:</strong> ${payment.reference || '—'}</p>
           <p><strong>التاريخ:</strong> ${payment.paid_at ? new Date(payment.paid_at).toLocaleString('ar-LY') : ''}</p>
           <hr />
-          <p>شكراً لتعاملكم.</p>
+          <p>��كراً لتعاملكم.</p>
         </div>
         <script>window.print();</script>
       </body></html>`;
@@ -237,7 +242,7 @@ export default function Customers() {
                 <TableRow>
                   <TableHead>اسم الزبون</TableHead>
                   <TableHead>عدد العقود</TableHead>
-                  <TableHead>إجمالي الإيجار</TableHead>
+                  <TableHead>��جمالي الإيجار</TableHead>
                   <TableHead>المدفوع</TableHead>
                   <TableHead>المتبقي</TableHead>
                   <TableHead>إجراءات</TableHead>
