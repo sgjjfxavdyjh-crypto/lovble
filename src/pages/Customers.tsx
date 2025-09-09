@@ -40,6 +40,8 @@ export default function Customers() {
   const [newCustomerOpen, setNewCustomerOpen] = useState(false);
   const [editingCustomerId, setEditingCustomerId] = useState<string | null>(null);
   const [customerNameInput, setCustomerNameInput] = useState('');
+  const [customerPhoneInput, setCustomerPhoneInput] = useState('');
+  const [customerCompanyInput, setCustomerCompanyInput] = useState('');
 
   useEffect(() => {
     (async () => {
@@ -351,7 +353,7 @@ export default function Customers() {
                           <div className="text-right">
                             <div>الإجمالي: {totalRent.toLocaleString('ar-LY')} د.ل</div>
                             <div>مدفوع: {paidForContract.toLocaleString('ar-LY')} د.ل</div>
-                            <div>المتبقي: {remaining.toLocaleString('ar-LY')} د.ل</div>
+                            <div>المتب��ي: {remaining.toLocaleString('ar-LY')} د.ل</div>
                           </div>
                         </div>
                       );
