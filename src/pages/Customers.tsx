@@ -31,7 +31,7 @@ interface ContractRow {
 export default function Customers() {
   const [payments, setPayments] = useState<PaymentRow[]>([]);
   const [contracts, setContracts] = useState<ContractRow[]>([]);
-  const [customers, setCustomers] = useState<{id:string; name:string}[]>([]);
+  const [customers, setCustomers] = useState<{id:string; name:string; phone?: string | null; company?: string | null}[]>([]);
   const [search, setSearch] = useState('');
   const [selectedCustomer, setSelectedCustomer] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -342,7 +342,7 @@ export default function Customers() {
                           </div>
                           <div className="text-right">
                             <div>الإجمالي: {totalRent.toLocaleString('ar-LY')} د.ل</div>
-                            <div>مدفوع: {paidForContract.toLocaleString('ar-LY')} د.ل</div>
+                            <div>م��فوع: {paidForContract.toLocaleString('ar-LY')} د.ل</div>
                             <div>المتبقي: {remaining.toLocaleString('ar-LY')} د.ل</div>
                           </div>
                         </div>
