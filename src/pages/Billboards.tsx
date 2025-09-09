@@ -387,7 +387,7 @@ export default function Billboards() {
               </datalist>
             </div>
             <div>
-              <Label>ال��قاس</Label>
+              <Label>المقاس</Label>
               <Select value={editForm.Size || ''} onValueChange={(v) => setEditForm((p: any) => ({ ...p, Size: v }))}>
                 <SelectTrigger><SelectValue placeholder="اختر المقاس" /></SelectTrigger>
                 <SelectContent>
@@ -408,10 +408,99 @@ export default function Billboards() {
               <Label>رابط الصورة</Label>
               <Input value={editForm.Image_URL || ''} onChange={(e) => setEditForm((p: any) => ({ ...p, Image_URL: e.target.value }))} />
             </div>
+
+            <div className="sm:col-span-2">
+              <div className="flex items-center gap-3">
+                <Label>لوحة شراكة</Label>
+                <input type="checkbox" checked={!!editForm.is_partnership} onChange={(e)=> setEditForm((p:any)=>({...p, is_partnership: e.target.checked}))} />
+              </div>
+            </div>
+
+            {editForm.is_partnership && (
+              <>
+                <div className="sm:col-span-2">
+                  <Label>الشركات المشاركة (فصل بالفواصل)</Label>
+                  <Input value={(Array.isArray(editForm.partner_companies)? editForm.partner_companies.join(', ') : editForm.partner_companies || '')} onChange={(e)=> setEditForm((p:any)=>({...p, partner_companies: e.target.value}))} />
+                </div>
+                <div>
+                  <Label>رأس مال اللوحة</Label>
+                  <Input type="number" value={editForm.capital || 0} onChange={(e)=> setEditForm((p:any)=>({...p, capital: Number(e.target.value)}))} />
+                </div>
+                <div>
+                  <Label>المتبقي من رأس المال</Label>
+                  <Input type="number" value={editForm.capital_remaining || editForm.capital || 0} onChange={(e)=> setEditForm((p:any)=>({...p, capital_remaining: Number(e.target.value)}))} />
+                </div>
+              </>
+            )}
+
           </div>
           <div className="flex justify-end gap-2 mt-4">
             <Button variant="outline" onClick={() => setEditOpen(false)}>إلغاء</Button>
             <Button onClick={saveEdit} disabled={saving}>{saving ? 'جارٍ الحفظ...' : 'حفظ'}</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Billboard Dialog */}
+      <Dialog open={addOpen} onOpenChange={setAddOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>إضافة لوحة جديدة</DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <Label>الاسم</Label>
+              <Input value={addForm.Billboard_Name || ''} onChange={(e) => setAddForm((p: any) => ({ ...p, Billboard_Name: e.target.value }))} />
+            </div>
+            <div>
+              <Label>المدينة</Label>
+              <Input value={addForm.City || ''} onChange={(e) => setAddForm((p: any) => ({ ...p, City: e.target.value }))} />
+            </div>
+            <div className="sm:col-span-2">
+              <Label>أقرب معلم</Label>
+              <Input value={addForm.Nearest_Landmark || ''} onChange={(e) => setAddForm((p: any) => ({ ...p, Nearest_Landmark: e.target.value }))} />
+            </div>
+            <div>
+              <Label>المقاس</Label>
+              <Input value={addForm.Size || ''} onChange={(e) => setAddForm((p: any) => ({ ...p, Size: e.target.value }))} />
+            </div>
+            <div>
+              <Label>المستوى</Label>
+              <Input value={addForm.Level || ''} onChange={(e) => setAddForm((p: any) => ({ ...p, Level: e.target.value }))} />
+            </div>
+            <div className="sm:col-span-2">
+              <Label>رابط الصورة</Label>
+              <Input value={addForm.Image_URL || ''} onChange={(e) => setAddForm((p: any) => ({ ...p, Image_URL: e.target.value }))} />
+            </div>
+
+            <div className="sm:col-span-2">
+              <div className="flex items-center gap-3">
+                <Label>لوحة شراكة</Label>
+                <input type="checkbox" checked={!!addForm.is_partnership} onChange={(e)=> setAddForm((p:any)=>({...p, is_partnership: e.target.checked}))} />
+              </div>
+            </div>
+
+            {addForm.is_partnership && (
+              <>
+                <div className="sm:col-span-2">
+                  <Label>الشركات المشاركة (فصل بالفواصل)</Label>
+                  <Input value={(Array.isArray(addForm.partner_companies)? addForm.partner_companies.join(', ') : addForm.partner_companies || '')} onChange={(e)=> setAddForm((p:any)=>({...p, partner_companies: e.target.value}))} />
+                </div>
+                <div>
+                  <Label>رأس مال اللوحة</Label>
+                  <Input type="number" value={addForm.capital || 0} onChange={(e)=> setAddForm((p:any)=>({...p, capital: Number(e.target.value)}))} />
+                </div>
+                <div>
+                  <Label>المتبقي من رأس المال</Label>
+                  <Input type="number" value={addForm.capital_remaining || addForm.capital || 0} onChange={(e)=> setAddForm((p:any)=>({...p, capital_remaining: Number(e.target.value)}))} />
+                </div>
+              </>
+            )}
+
+          </div>
+          <div className="flex justify-end gap-2 mt-4">
+            <Button variant="outline" onClick={() => setAddOpen(false)}>إلغاء</Button>
+            <Button onClick={addBillboard} disabled={adding}>{adding ? 'جاري الإضافة...' : 'إضافة'}</Button>
           </div>
         </DialogContent>
       </Dialog>
