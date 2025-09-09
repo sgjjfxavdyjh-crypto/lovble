@@ -63,6 +63,13 @@ export default function Contracts() {
       const billboardsData = await getAvailableBillboards();
       setContracts(contractsData as Contract[]);
       setAvailableBillboards(billboardsData || []);
+      // load customers list
+      try {
+        const { data: cdata, error: cErr } = await supabase.from('customers').select('id,name').order('name', { ascending: true });
+        if (!cErr && Array.isArray(cdata)) setCustomersList(cdata as any);
+      } catch (e) {
+        console.warn('failed to load customers list', e);
+      }
     } catch (error) {
       console.error('خطأ في تحميل البيانات:', error);
       toast.error('فشل في تحميل البيانات');
@@ -361,7 +368,7 @@ export default function Contracts() {
                 <div className="md:col-span-2 space-y-4">
                   <Card className="border">
                     <CardHeader>
-                      <CardTitle className="text-base">اللوحات المختارة ({formData.billboard_ids.length})</CardTitle>
+                      <CardTitle className="text-base">اللوحات المختار�� ({formData.billboard_ids.length})</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="max-h-96 overflow-auto space-y-2">
