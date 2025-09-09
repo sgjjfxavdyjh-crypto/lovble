@@ -26,14 +26,22 @@ export async function createContract(contractData: ContractData) {
   // فصل معرفات اللوحات عن بيانات العقد
   const { billboard_ids, ...contractPayload } = contractData;
 
-  // إذا كان هناك زبون بنفس الاسم، حاول العثور على customer_id
-  let customer_id: string | null = null;
-  if (contractPayload.customer_name) {
+  // Determine customer_id: prefer explicit, else find by name, else create new customer
+  let customer_id: string | null = (contractData as any).customer_id || null;
+
+  if (!customer_id && contractPayload.customer_name) {
     try {
-      const { data: existing } = await supabase.from('customers').select('id').eq('name', contractPayload.customer_name).limit(1).maybeSingle();
-      if (existing && (existing as any).id) customer_id = (existing as any).id;
+      const nameTrim = String(contractPayload.customer_name).trim();
+      const { data: existing, error: exErr } = await supabase.from('customers').select('id').ilike('name', nameTrim).limit(1).maybeSingle();
+      if (!exErr && existing && (existing as any).id) {
+        customer_id = (existing as any).id;
+      } else {
+        // create new customer
+        const { data: newC, error: newErr } = await supabase.from('customers').insert({ name: nameTrim }).select().single();
+        if (!newErr && newC && (newC as any).id) customer_id = (newC as any).id;
+      }
     } catch (e) {
-      // ignore lookup failure, proceed without customer_id
+      // ignore and proceed without customer_id
     }
   }
 
