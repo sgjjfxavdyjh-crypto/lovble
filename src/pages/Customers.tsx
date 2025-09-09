@@ -208,7 +208,7 @@ export default function Customers() {
           <p><strong>المرجع:</strong> ${payment.reference || '—'}</p>
           <p><strong>التاريخ:</strong> ${payment.paid_at ? new Date(payment.paid_at).toLocaleString('ar-LY') : ''}</p>
           <hr />
-          <p>��كراً لتعاملكم.</p>
+          <p>شكراً لتعاملكم.</p>
         </div>
         <script>window.print();</script>
       </body></html>`;
@@ -232,9 +232,50 @@ export default function Customers() {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
             <Input placeholder="ابحث بالزبون" value={search} onChange={(e)=>setSearch(e.target.value)} />
-            <div></div>
+            <div className="flex items-center justify-center">
+              <Button onClick={() => { setCustomerNameInput(''); setEditingCustomerId(null); setNewCustomerOpen(true); }}>إضافة زبون جديد</Button>
+            </div>
             <div className="flex items-center text-sm text-muted-foreground">إجمالي المدفوعات: {totalAllPaid.toLocaleString('ar-LY')} د.ل</div>
           </div>
+
+          {/* Add/Edit customer dialog */}
+          <Dialog open={newCustomerOpen} onOpenChange={setNewCustomerOpen}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>{editingCustomerId ? 'تعديل الزبون' : 'إضافة زبون جديد'}</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 mt-4">
+                <Input placeholder="اسم الزبون" value={customerNameInput} onChange={(e)=>setCustomerNameInput(e.target.value)} />
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" onClick={() => setNewCustomerOpen(false)}>إلغاء</Button>
+                  <Button onClick={async () => {
+                    const name = customerNameInput.trim();
+                    if (!name) return;
+                    try {
+                      if (editingCustomerId) {
+                        const { error } = await supabase.from('customers').update({ name }).eq('id', editingCustomerId);
+                        if (!error) {
+                          setCustomers(prev => prev.map(c => c.id === editingCustomerId ? { ...c, name } : c));
+                          setNewCustomerOpen(false);
+                          setEditingCustomerId(null);
+                          setCustomerNameInput('');
+                        }
+                      } else {
+                        const { data: newC, error } = await supabase.from('customers').insert({ name }).select().single();
+                        if (!error && newC && (newC as any).id) {
+                          setCustomers(prev => [{ id: (newC as any).id, name }, ...prev]);
+                          setNewCustomerOpen(false);
+                          setCustomerNameInput('');
+                        }
+                      }
+                    } catch (e) {
+                      console.warn('customer save error', e);
+                    }
+                  }}>حفظ</Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
 
           <div className="overflow-x-auto">
             <Table>
@@ -242,7 +283,7 @@ export default function Customers() {
                 <TableRow>
                   <TableHead>اسم الزبون</TableHead>
                   <TableHead>عدد العقود</TableHead>
-                  <TableHead>��جمالي الإيجار</TableHead>
+                  <TableHead>إجمالي الإيجار</TableHead>
                   <TableHead>المدفوع</TableHead>
                   <TableHead>المتبقي</TableHead>
                   <TableHead>إجراءات</TableHead>
