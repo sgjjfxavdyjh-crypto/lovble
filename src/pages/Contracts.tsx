@@ -166,7 +166,7 @@ export default function Contracts() {
     const customer = customersList.find(c => c.id === assignCustomerId);
     try {
       await updateContract(assignContractNumber, { customer_id: assignCustomerId, 'Customer Name': customer?.name || '' });
-      toast.success('تم تحديث العميل لل��قد');
+      toast.success('تم تحديث العميل للعقد');
       setAssignOpen(false);
       setAssignContractNumber(null);
       setAssignCustomerId(null);
@@ -355,7 +355,7 @@ export default function Contracts() {
                       <div>
                         <Label>ا��فئة السعرية</Label>
                         <Select value={pricingCategory} onValueChange={(v)=>setPricingCategory(v as CustomerType)}>
-                          <SelectTrigger><SelectValue placeholder="��لفئة" /></SelectTrigger>
+                          <SelectTrigger><SelectValue placeholder="الفئة" /></SelectTrigger>
                           <SelectContent>
                             {CUSTOMERS.map(c => (<SelectItem key={c} value={c}>{c}</SelectItem>))}
                           </SelectContent>
@@ -652,6 +652,82 @@ export default function Contracts() {
                           className="h-8 w-8 p-0"
                         >
                           <Trash2 className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={async () => {
+                            try {
+                              setPrinting(contract.id);
+                              const details = await getContractWithBillboards(String(contract.id));
+
+                              // template PDF URL (from uploaded file)
+                              const templateUrl = 'https://cdn.builder.io/o/assets%2Fb496a75bf3a847fbbb30839d00fe0721%2F66e10faf2c4d44f787d0db0b9079715c?alt=media&token=205fc1ff-ab26-46fd-bdd1-9ab5ee566add&apiKey=b496a75bf3a847fbbb30839d00fe0721';
+                              const existingPdfBytes = await fetch(templateUrl).then(r => r.arrayBuffer());
+
+                              const pdfDoc = await PDFDocument.load(existingPdfBytes);
+                              const pages = pdfDoc.getPages();
+                              const helv = await pdfDoc.embedFont(StandardFonts.Helvetica);
+
+                              // Page 0: header fields
+                              const p0 = pages[0];
+                              const { width, height } = p0.getSize();
+
+                              const contractNumber = details?.Contract_Number || contract.Contract_Number || String(contract.id);
+                              const partyTwo = details?.['Customer Name'] || contract.customer_name || '';
+                              const partyOne = 'شركة الفارس الذهبي للدعاية والإعلان';
+                              const dateStr = (details?.['Contract Date'] || contract.contract_date || contract.start_date) ? new Date(details?.['Contract Date'] || contract.contract_date || contract.start_date).toLocaleDateString('ar-LY') : '';
+                              const total = (details?.total_rent || details?.['Total Rent'] || contract.rent_cost || 0).toLocaleString();
+
+                              // draw some header text (positions may need tuning)
+                              p0.drawText(`إيجار لمواقع إعلانية رقم: ${contractNumber}`, { x: 40, y: height - 120, size: 12, font: helv, color: rgb(0,0,0) });
+                              p0.drawText(`التاريخ: ${dateStr}`, { x: 40, y: height - 140, size: 11, font: helv, color: rgb(0,0,0) });
+                              p0.drawText(`الطرف الأول: ${partyOne}`, { x: 40, y: height - 170, size: 11, font: helv, color: rgb(0,0,0) });
+                              p0.drawText(`الطرف الثاني: ${partyTwo}`, { x: 40, y: height - 190, size: 11, font: helv, color: rgb(0,0,0) });
+                              p0.drawText(`قيمة العقد: ${total} د.ل`, { x: 40, y: height - 210, size: 11, font: helv, color: rgb(0,0,0) });
+
+                              // Page 1: table of billboards
+                              const p1 = pages[1] || pages[0];
+                              const { width: w1, height: h1 } = p1.getSize();
+                              let startY = h1 - 160;
+                              const rowHeight = 18;
+
+                              const billboards = details?.billboards || details?.items || details?.billboard_ids || [];
+
+                              if (Array.isArray(billboards) && billboards.length > 0) {
+                                // header
+                                p1.drawText('اللوحة - الموقع - القياس - الوجوه - تاريخ الانتهاء', { x: 40, y: startY, size: 11, font: helv, color: rgb(0,0,0) });
+                                startY -= rowHeight;
+                                for (const b of billboards) {
+                                  if (startY < 60) break; // avoid overflow
+                                  const id = b.id || b.Contract_Number || b.contract_number || b['Contract Number'] || String(b);
+                                  const loc = (b.location || b['location'] || b['Location'] || b['Customer Name'] || '') as string;
+                                  const size = (b.size || b['size'] || b['Size'] || '') as string;
+                                  const faces = (b.faces || b['faces'] || b['Faces'] || '') as string;
+                                  const endDate = b.end_date || b['End Date'] || '';
+                                  const endStr = endDate ? new Date(endDate).toLocaleDateString('ar-LY') : '';
+                                  const line = `${id} - ${loc} - ${size} - ${faces} - ${endStr}`;
+                                  p1.drawText(line, { x: 40, y: startY, size: 10, font: helv, color: rgb(0,0,0) });
+                                  startY -= rowHeight;
+                                }
+                              }
+
+                              const pdfBytes = await pdfDoc.save();
+                              const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+                              const url = URL.createObjectURL(blob);
+                              window.open(url, '_blank');
+
+                            } catch (e) {
+                              console.error('print contract error', e);
+                              // use toast if available
+                              try { toast.error('فشل إنشاء ملف العقد'); } catch {}
+                            } finally {
+                              setPrinting(null);
+                            }
+                          }}
+                          className="h-8 px-2"
+                        >
+                          طباعة
                         </Button>
                       </div>
                     </TableCell>
