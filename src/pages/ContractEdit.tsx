@@ -399,11 +399,17 @@ export default function ContractEdit() {
                       <CommandInput placeholder="ابحث أو اكتب اسم جديد" value={customerQuery} onValueChange={setCustomerQuery} />
                       <CommandList>
                         <CommandEmpty>
-                          <Button variant="ghost" className="w-full justify-start" onClick={() => {
+                          <Button variant="ghost" className="w-full justify-start" onClick={async () => {
                             if (customerQuery.trim()) {
                               const name = customerQuery.trim();
-                              setCustomerName(name);
-                              setCustomers((prev) => prev.includes(name) ? prev : [name, ...prev]);
+                              try {
+                                const { data: newC, error } = await supabase.from('customers').insert({ name }).select().single();
+                                if (!error && newC && (newC as any).id) {
+                                  setCustomerId((newC as any).id);
+                                  setCustomerName(name);
+                                  setCustomers(prev => [{ id: (newC as any).id, name }, ...prev]);
+                                }
+                              } catch (e) { console.warn(e); }
                               setCustomerOpen(false);
                               setCustomerQuery('');
                             }
@@ -413,21 +419,28 @@ export default function ContractEdit() {
                         </CommandEmpty>
                         <CommandGroup>
                           {customers.map((c) => (
-                            <CommandItem key={c} value={c} onSelect={() => {
-                              setCustomerName(c);
+                            <CommandItem key={c.id} value={c.name} onSelect={() => {
+                              setCustomerName(c.name);
+                              setCustomerId(c.id);
                               setCustomerOpen(false);
                               setCustomerQuery('');
                             }}>
-                              {c}
+                              {c.name}
                             </CommandItem>
                           ))}
-                          {customerQuery && !customers.includes(customerQuery.trim()) && (
+                          {customerQuery && !customers.some(x => x.name === customerQuery.trim()) && (
                             <CommandItem
                               value={`__add_${customerQuery}`}
-                              onSelect={() => {
+                              onSelect={async () => {
                                 const name = customerQuery.trim();
-                                setCustomerName(name);
-                                setCustomers((prev) => prev.includes(name) ? prev : [name, ...prev]);
+                                try {
+                                  const { data: newC, error } = await supabase.from('customers').insert({ name }).select().single();
+                                  if (!error && newC && (newC as any).id) {
+                                    setCustomerId((newC as any).id);
+                                    setCustomerName(name);
+                                    setCustomers(prev => [{ id: (newC as any).id, name }, ...prev]);
+                                  }
+                                } catch (e) { console.warn(e); }
                                 setCustomerOpen(false);
                                 setCustomerQuery('');
                               }}
