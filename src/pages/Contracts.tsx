@@ -370,7 +370,7 @@ export default function Contracts() {
                         />
                       </div>
                       <div>
-                        <Label>المدة (بالأشهر)</Label>
+                        <Label>المدة (با��أشهر)</Label>
                         <Select value={String(durationMonths)} onValueChange={(v)=>setDurationMonths(Number(v))}>
                           <SelectTrigger><SelectValue placeholder="اختر المدة" /></SelectTrigger>
                           <SelectContent>
@@ -667,7 +667,16 @@ export default function Contracts() {
 
                               const pdfDoc = await PDFDocument.load(existingPdfBytes);
                               const pages = pdfDoc.getPages();
-                              const helv = await pdfDoc.embedFont(StandardFonts.Helvetica);
+                              // Embed a Unicode-capable Arabic font (Noto Sans Arabic)
+                              const fontUrl = 'https://fonts.gstatic.com/s/noto/v14/NotoSansArabic-Regular.ttf';
+                              let helv: any;
+                              try {
+                                const fontBytes = await fetch(fontUrl).then(r => r.arrayBuffer());
+                                helv = await pdfDoc.embedFont(fontBytes);
+                              } catch (err) {
+                                // fallback to builtin font if fetch fails (will not support Arabic properly)
+                                try { helv = await pdfDoc.embedFont(StandardFonts.Helvetica); } catch { helv = undefined; }
+                              }
 
                               // Page 0: header fields
                               const p0 = pages[0];
@@ -680,11 +689,21 @@ export default function Contracts() {
                               const total = (details?.total_rent || details?.['Total Rent'] || contract.rent_cost || 0).toLocaleString();
 
                               // draw some header text (positions may need tuning)
-                              p0.drawText(`إيجار لمواقع إعلانية رقم: ${contractNumber}`, { x: 40, y: height - 120, size: 12, font: helv, color: rgb(0,0,0) });
-                              p0.drawText(`التاريخ: ${dateStr}`, { x: 40, y: height - 140, size: 11, font: helv, color: rgb(0,0,0) });
-                              p0.drawText(`الطرف الأول: ${partyOne}`, { x: 40, y: height - 170, size: 11, font: helv, color: rgb(0,0,0) });
-                              p0.drawText(`الطرف الثاني: ${partyTwo}`, { x: 40, y: height - 190, size: 11, font: helv, color: rgb(0,0,0) });
-                              p0.drawText(`قيمة العقد: ${total} د.ل`, { x: 40, y: height - 210, size: 11, font: helv, color: rgb(0,0,0) });
+                              const drawOpts = (font: any, size: number) => ({ font: font, size, color: rgb(0,0,0) });
+                              if (helv) {
+                                p0.drawText(`إيجار لمواقع إعلانية رقم: ${contractNumber}`, { x: 40, y: height - 120, ...drawOpts(helv, 12) });
+                                p0.drawText(`التاريخ: ${dateStr}`, { x: 40, y: height - 140, ...drawOpts(helv, 11) });
+                                p0.drawText(`الطرف الأول: ${partyOne}`, { x: 40, y: height - 170, ...drawOpts(helv, 11) });
+                                p0.drawText(`الطرف الثاني: ${partyTwo}`, { x: 40, y: height - 190, ...drawOpts(helv, 11) });
+                                p0.drawText(`قيمة العقد: ${total} د.ل`, { x: 40, y: height - 210, ...drawOpts(helv, 11) });
+                              } else {
+                                // fallback: draw ascii-only placeholders
+                                p0.drawText(`Contract: ${contractNumber}`, { x: 40, y: height - 120, size: 12, color: rgb(0,0,0) });
+                                p0.drawText(`Date: ${dateStr}`, { x: 40, y: height - 140, size: 11, color: rgb(0,0,0) });
+                                p0.drawText(`Party 1: ${partyOne}`, { x: 40, y: height - 170, size: 11, color: rgb(0,0,0) });
+                                p0.drawText(`Party 2: ${partyTwo}`, { x: 40, y: height - 190, size: 11, color: rgb(0,0,0) });
+                                p0.drawText(`Total: ${total} LYD`, { x: 40, y: height - 210, size: 11, color: rgb(0,0,0) });
+                              }
 
                               // Page 1: table of billboards
                               const p1 = pages[1] || pages[0];
@@ -720,7 +739,7 @@ export default function Contracts() {
                             } catch (e) {
                               console.error('print contract error', e);
                               // use toast if available
-                              try { toast.error('فشل إنشاء ملف العق��'); } catch {}
+                              try { toast.error('فشل إنشاء ملف العقد'); } catch {}
                             } finally {
                               setPrinting(null);
                             }
@@ -749,7 +768,7 @@ export default function Contracts() {
             <div className="text-center py-8">
               <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-foreground mb-2">لا توجد عقود</h3>
-              <p className="text-muted-foreground">ابدأ بإ��شاء عقد جديد</p>
+              <p className="text-muted-foreground">ابدأ بإنشاء عقد جديد</p>
             </div>
           )}
         </CardContent>
