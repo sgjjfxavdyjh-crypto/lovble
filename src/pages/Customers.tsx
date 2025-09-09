@@ -18,88 +18,177 @@ interface PaymentRow {
   entry_type: string | null;
 }
 
+import { useEffect, useMemo, useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { supabase } from '@/integrations/supabase/client';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+
+interface PaymentRow {
+  id: string;
+  customer_id: string | null;
+  customer_name: string;
+  contract_number: string | null;
+  amount: number | null;
+  method: string | null;
+  reference: string | null;
+  notes: string | null;
+  paid_at: string | null;
+  entry_type: string | null;
+}
+
+interface ContractRow {
+  Contract_Number: string | null;
+  "Customer Name": string | null;
+  "Total Rent": string | number | null;
+  "Start Date"?: string | null;
+  "End Date"?: string | null;
+}
+
 export default function Customers() {
-  const [rows, setRows] = useState<PaymentRow[]>([]);
+  const [payments, setPayments] = useState<PaymentRow[]>([]);
+  const [contracts, setContracts] = useState<ContractRow[]>([]);
   const [search, setSearch] = useState('');
-  const [customer, setCustomer] = useState<string>('all');
+  const [selectedCustomer, setSelectedCustomer] = useState<string | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   useEffect(() => {
     (async () => {
-      const { data, error } = await supabase
-        .from('customer_payments')
-        .select('id,customer_id,customer_name,contract_number,amount,method,reference,notes,paid_at,entry_type')
-        .order('paid_at', { ascending: false });
-      if (!error) setRows((data || []) as any);
+      const [pRes, cRes] = await Promise.all([
+        supabase.from('customer_payments').select('id,customer_id,customer_name,contract_number,amount,method,reference,notes,paid_at,entry_type').order('paid_at', { ascending: false }),
+        supabase.from('Contract').select('Contract_Number, "Customer Name", "Total Rent", "Contract Date", "Start Date", "End Date"')
+      ]);
+
+      if (!pRes.error) setPayments((pRes.data || []) as any);
+      if (!cRes.error) setContracts((cRes.data || []) as any);
     })();
   }, []);
 
-  const customers = useMemo(() => Array.from(new Set(rows.map(r => r.customer_name).filter(Boolean))), [rows]);
+  const customerNames = useMemo(() => Array.from(new Set(payments.map(p => p.customer_name).filter(Boolean))), [payments]);
 
-  const filtered = rows.filter(r => {
-    const q = search.trim().toLowerCase();
-    const matchesSearch = !q || [r.customer_name, r.contract_number, r.reference, r.notes].some(v => String(v || '').toLowerCase().includes(q));
-    const matchesCustomer = customer === 'all' || r.customer_name === customer;
-    return matchesSearch && matchesCustomer;
-  });
+  // Build summary per customer using payments + contracts
+  const customersSummary = useMemo(() => {
+    const map = new Map<string, { name: string; contractsCount: number; totalRent: number; totalPaid: number }>();
 
-  const totals = useMemo(() => {
-    const byCustomer = new Map<string, number>();
-    for (const r of rows) {
-      const key = r.customer_name || '—';
-      const prev = byCustomer.get(key) || 0;
-      byCustomer.set(key, prev + (Number(r.amount) || 0));
+    // contracts info
+    for (const c of contracts) {
+      const name = (c['Customer Name'] || '').toString() || '—';
+      const rent = Number(c['Total Rent'] || 0) || 0;
+      const cur = map.get(name) || { name, contractsCount: 0, totalRent: 0, totalPaid: 0 };
+      cur.contractsCount += 1;
+      cur.totalRent += rent;
+      map.set(name, cur);
     }
-    return byCustomer;
-  }, [rows]);
 
-  const totalAll = Array.from(totals.values()).reduce((s,n)=>s+n,0);
+    // payments
+    for (const p of payments) {
+      const name = (p.customer_name || '').toString() || '—';
+      const amt = Number(p.amount || 0) || 0;
+      const cur = map.get(name) || { name, contractsCount: 0, totalRent: 0, totalPaid: 0 };
+      cur.totalPaid += amt;
+      map.set(name, cur);
+    }
+
+    // convert to array, sort by totalRent desc
+    return Array.from(map.values()).sort((a, b) => b.totalRent - a.totalRent);
+  }, [payments, contracts]);
+
+  const totalAllPaid = payments.reduce((s, p) => s + (Number(p.amount) || 0), 0);
+
+  const openCustomer = (name: string) => {
+    setSelectedCustomer(name);
+    setDialogOpen(true);
+  };
+
+  const closeDialog = () => {
+    setDialogOpen(false);
+    setSelectedCustomer(null);
+  };
+
+  const customerContracts = useMemo(() => {
+    if (!selectedCustomer) return [] as ContractRow[];
+    return contracts.filter(c => (c['Customer Name'] || '').toString() === selectedCustomer);
+  }, [selectedCustomer, contracts]);
+
+  const customerPayments = useMemo(() => {
+    if (!selectedCustomer) return [] as PaymentRow[];
+    return payments.filter(p => (p.customer_name || '').toString() === selectedCustomer).sort((a,b)=> (b.paid_at||'').localeCompare(a.paid_at||''));
+  }, [selectedCustomer, payments]);
+
+  const printReceipt = (payment: PaymentRow) => {
+    const html = `
+      <html dir="rtl"><head><meta charset="utf-8"><title>إيصال دفع</title></head>
+      <body>
+        <div style="font-family: sans-serif; padding:20px; max-width:600px; margin:auto;">
+          <h2>إيصال دفع</h2>
+          <p><strong>العميل:</strong> ${payment.customer_name}</p>
+          <p><strong>العقد:</strong> ${payment.contract_number || '—'}</p>
+          <p><strong>المبلغ:</strong> ${(Number(payment.amount)||0).toLocaleString('ar-LY')} د.ل</p>
+          <p><strong>الطريقة:</strong> ${payment.method || '—'}</p>
+          <p><strong>المرجع:</strong> ${payment.reference || '—'}</p>
+          <p><strong>التاريخ:</strong> ${payment.paid_at ? new Date(payment.paid_at).toLocaleString('ar-LY') : ''}</p>
+          <hr />
+          <p>شكراً لتعاملكم.</p>
+        </div>
+        <script>window.print();</script>
+      </body></html>`;
+    const w = window.open('', '_blank');
+    if (w) {
+      w.document.open();
+      w.document.write(html);
+      w.document.close();
+    }
+  };
+
+  const searchQ = search.trim().toLowerCase();
+  const visible = customersSummary.filter(c => !searchQ || c.name.toLowerCase().includes(searchQ));
 
   return (
     <div className="space-y-6">
       <Card className="bg-gradient-card border-0 shadow-card">
         <CardHeader>
-          <CardTitle>الزبائن — المدفوعات</CardTitle>
+          <CardTitle>الزبائن — ملخص</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
-            <Input placeholder="ابحث بالزبون/العقد/مرجع" value={search} onChange={(e)=>setSearch(e.target.value)} />
-            <Select value={customer} onValueChange={setCustomer}>
-              <SelectTrigger><SelectValue placeholder="اختر الزبون" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">جميع الزبائن</SelectItem>
-                {customers.map(c => (<SelectItem key={c} value={c}>{c}</SelectItem>))}
-              </SelectContent>
-            </Select>
-            <div className="flex items-center text-sm text-muted-foreground">إجمالي المدفوعات: {totalAll.toLocaleString('ar-LY')} د.ل</div>
+            <Input placeholder="ابحث بالزبون" value={search} onChange={(e)=>setSearch(e.target.value)} />
+            <div></div>
+            <div className="flex items-center text-sm text-muted-foreground">إجمالي المدفوعات: {totalAllPaid.toLocaleString('ar-LY')} د.ل</div>
           </div>
+
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>الزبون</TableHead>
-                  <TableHead>رقم العقد</TableHead>
-                  <TableHead>المبلغ</TableHead>
-                  <TableHead>الطريقة</TableHead>
-                  <TableHead>المرجع</TableHead>
-                  <TableHead>تاريخ السداد</TableHead>
-                  <TableHead>ملاحظات</TableHead>
+                  <TableHead>اسم الزبون</TableHead>
+                  <TableHead>عدد العقود</TableHead>
+                  <TableHead>إجمالي الإيجار</TableHead>
+                  <TableHead>المدفوع</TableHead>
+                  <TableHead>المتبقي</TableHead>
+                  <TableHead>إجراءات</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.map(r => (
-                  <TableRow key={r.id}>
-                    <TableCell className="font-medium">{r.customer_name}</TableCell>
-                    <TableCell>{r.contract_number || '—'}</TableCell>
-                    <TableCell>{(Number(r.amount) || 0).toLocaleString('ar-LY')} د.ل</TableCell>
-                    <TableCell>{r.method || '—'}</TableCell>
-                    <TableCell>{r.reference || '—'}</TableCell>
-                    <TableCell>{r.paid_at ? new Date(r.paid_at).toLocaleString('ar-LY') : '—'}</TableCell>
-                    <TableCell className="max-w-[360px] truncate">{r.notes || '—'}</TableCell>
+                {visible.map(c => (
+                  <TableRow key={c.name} className="hover:bg-card/50 transition-colors">
+                    <TableCell className="font-medium">{c.name}</TableCell>
+                    <TableCell>{c.contractsCount}</TableCell>
+                    <TableCell>{c.totalRent.toLocaleString('ar-LY')} د.ل</TableCell>
+                    <TableCell>{c.totalPaid.toLocaleString('ar-LY')} د.ل</TableCell>
+                    <TableCell>{(c.totalRent - c.totalPaid).toLocaleString('ar-LY')} د.ل</TableCell>
+                    <TableCell>
+                      <div className="flex gap-2">
+                        <Button size="sm" onClick={() => openCustomer(c.name)}>عرض</Button>
+                      </div>
+                    </TableCell>
                   </TableRow>
                 ))}
-                {filtered.length === 0 && (
+                {visible.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center text-muted-foreground py-6">لا توجد بيانات</TableCell>
+                    <TableCell colSpan={6} className="text-center text-muted-foreground py-6">لا توجد بيانات</TableCell>
                   </TableRow>
                 )}
               </TableBody>
@@ -107,6 +196,77 @@ export default function Customers() {
           </div>
         </CardContent>
       </Card>
+
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>تفاصيل العميل {selectedCustomer}</DialogTitle>
+          </DialogHeader>
+
+          {selectedCustomer && (
+            <div className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>عقود {selectedCustomer} ({customerContracts.length})</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 gap-2">
+                    {customerContracts.map(ct => {
+                      const paidForContract = payments.filter(p => (p.contract_number||'') === (ct.Contract_Number||'')).reduce((s, x) => s + (Number(x.amount)||0), 0);
+                      const totalRent = Number(ct['Total Rent'] || 0) || 0;
+                      const remaining = Math.max(0, totalRent - paidForContract);
+                      return (
+                        <div key={ct.Contract_Number} className="flex items-center justify-between border rounded p-3">
+                          <div>
+                            <div className="font-medium">عقد: {ct.Contract_Number}</div>
+                            <div className="text-sm text-muted-foreground">{ct['Start Date'] || ct['Contract Date'] || '—'} → {ct['End Date'] || '—'}</div>
+                          </div>
+                          <div className="text-right">
+                            <div>الإجمالي: {totalRent.toLocaleString('ar-LY')} د.ل</div>
+                            <div>مدفوع: {paidForContract.toLocaleString('ar-LY')} د.ل</div>
+                            <div>المتبقي: {remaining.toLocaleString('ar-LY')} د.ل</div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                    {customerContracts.length === 0 && (<div className="text-sm text-muted-foreground">لا توجد عقود لهذا العميل</div>)}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>الدفعات والإيصالات</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {customerPayments.map(p => (
+                      <div key={p.id} className="flex items-center justify-between border rounded p-3">
+                        <div>
+                          <div className="font-medium">{p.contract_number || '—'}</div>
+                          <div className="text-sm text-muted-foreground">{p.reference || ''}</div>
+                        </div>
+                        <div className="text-right">
+                          <div className="font-semibold">{(Number(p.amount)||0).toLocaleString('ar-LY')} د.ل</div>
+                          <div className="text-xs text-muted-foreground">{p.paid_at ? new Date(p.paid_at).toLocaleString('ar-LY') : '—'}</div>
+                          <div className="mt-2">
+                            <Button size="sm" onClick={() => printReceipt(p)}>طباعة إيصال</Button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    {customerPayments.length === 0 && (<div className="text-sm text-muted-foreground">لا توجد دفعات</div>)}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <div className="flex justify-end">
+                <Button variant="outline" onClick={closeDialog}>إغلاق</Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
