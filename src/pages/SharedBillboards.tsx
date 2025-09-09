@@ -14,12 +14,15 @@ export default function SharedBillboards() {
   const load = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.from('billboards').select('id,Billboard_Name,Size,city,partner_companies,is_partnership,capital,capital_remaining,price').eq('is_partnership', true);
+      // select common column names (lowercase). If your DB uses different column names, adjust accordingly.
+      const cols = 'id,name,size,city,partner_companies,is_partnership,capital,capital_remaining,price';
+      const { data, error } = await supabase.from('billboards').select(cols).eq('is_partnership', true);
       if (error) throw error;
       setList(data || []);
     } catch (e:any) {
-      console.error('load shared billboards', e);
-      toast.error(e?.message || 'فشل تحميل اللوحات المشتركة');
+      // Log full error for debugging and show a readable message to the user
+      console.error('load shared billboards', e, { message: e?.message, details: e?.details, hint: e?.hint });
+      toast.error(e?.message || JSON.stringify(e) || 'فشل تحميل اللوحات المشتركة');
     } finally {
       setLoading(false);
     }
