@@ -200,7 +200,7 @@ export default function Customers() {
       <html dir="rtl"><head><meta charset="utf-8"><title>إيصال دفع</title></head>
       <body>
         <div style="font-family: sans-serif; padding:20px; max-width:600px; margin:auto;">
-          <h2>��يصال دفع</h2>
+          <h2>إيصال دفع</h2>
           <p><strong>العميل:</strong> ${payment.customer_name}</p>
           <p><strong>العقد:</strong> ${payment.contract_number || '—'}</p>
           <p><strong>المبلغ:</strong> ${(Number(payment.amount)||0).toLocaleString('ar-LY')} د.ل</p>
@@ -246,26 +246,34 @@ export default function Customers() {
               </DialogHeader>
               <div className="space-y-4 mt-4">
                 <Input placeholder="اسم الزبون" value={customerNameInput} onChange={(e)=>setCustomerNameInput(e.target.value)} />
+                <Input placeholder="هاتف" value={customerPhoneInput} onChange={(e)=>setCustomerPhoneInput(e.target.value)} />
+                <Input placeholder="اسم الشركة" value={customerCompanyInput} onChange={(e)=>setCustomerCompanyInput(e.target.value)} />
                 <div className="flex justify-end gap-2">
                   <Button variant="outline" onClick={() => setNewCustomerOpen(false)}>إلغاء</Button>
                   <Button onClick={async () => {
                     const name = customerNameInput.trim();
+                    const phone = customerPhoneInput.trim();
+                    const company = customerCompanyInput.trim();
                     if (!name) return;
                     try {
                       if (editingCustomerId) {
-                        const { error } = await supabase.from('customers').update({ name }).eq('id', editingCustomerId);
+                        const { error } = await supabase.from('customers').update({ name, phone: phone || null, company: company || null }).eq('id', editingCustomerId);
                         if (!error) {
-                          setCustomers(prev => prev.map(c => c.id === editingCustomerId ? { ...c, name } : c));
+                          setCustomers(prev => prev.map(c => c.id === editingCustomerId ? { ...c, name, phone: phone || null, company: company || null } : c));
                           setNewCustomerOpen(false);
                           setEditingCustomerId(null);
                           setCustomerNameInput('');
+                          setCustomerPhoneInput('');
+                          setCustomerCompanyInput('');
                         }
                       } else {
-                        const { data: newC, error } = await supabase.from('customers').insert({ name }).select().single();
+                        const { data: newC, error } = await supabase.from('customers').insert({ name, phone: phone || null, company: company || null }).select().single();
                         if (!error && newC && (newC as any).id) {
-                          setCustomers(prev => [{ id: (newC as any).id, name }, ...prev]);
+                          setCustomers(prev => [{ id: (newC as any).id, name: (newC as any).name || name, phone: (newC as any).phone || phone || null, company: (newC as any).company || company || null }, ...prev]);
                           setNewCustomerOpen(false);
                           setCustomerNameInput('');
+                          setCustomerPhoneInput('');
+                          setCustomerCompanyInput('');
                         }
                       }
                     } catch (e) {
