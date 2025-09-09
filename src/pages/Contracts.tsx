@@ -413,7 +413,7 @@ export default function Contracts() {
                           </div>
                         ))}
                         {formData.billboard_ids.length === 0 && (
-                          <p className="text-sm text-muted-foreground">لم يتم اختيار أي لوحة</p>
+                          <p className="text-sm text-muted-foreground">لم يت�� اختيار أي لوحة</p>
                         )}
                       </div>
                     </CardContent>
@@ -470,7 +470,7 @@ export default function Contracts() {
         </Dialog>
       </div>
 
-      {/* إحصائيات سريعة */}
+      {/* إحصائيات س��يعة */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card className="bg-gradient-card border-0 shadow-card">
           <CardContent className="p-6">
@@ -593,7 +593,7 @@ export default function Contracts() {
               <TableHeader>
                 <TableRow>
                   <TableHead>اسم الزبون</TableHead>
-                  <TableHead>نوع الإعلان</TableHead>
+                  <TableHead>نوع الإعلا��</TableHead>
                   <TableHead>تاريخ البداية</TableHead>
                   <TableHead>تاريخ النهاية</TableHead>
                   <TableHead>التكلفة</TableHead>
@@ -751,10 +751,10 @@ export default function Contracts() {
             <DialogTitle>تعيين زبون للعقد {assignContractNumber}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 p-2">
-            <Select value={assignCustomerId || ''} onValueChange={(v) => setAssignCustomerId(v || null)}>
+            <Select value={assignCustomerId || '__none'} onValueChange={(v) => setAssignCustomerId(v === '__none' ? null : v)}>
               <SelectTrigger><SelectValue placeholder="اختر زبون" /></SelectTrigger>
               <SelectContent className="max-h-60">
-                <SelectItem value="">اختيار</SelectItem>
+                <SelectItem value="__none">اختيار</SelectItem>
                 {customersList.map(c => (
                   <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
                 ))}
