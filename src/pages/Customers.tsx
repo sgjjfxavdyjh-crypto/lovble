@@ -187,7 +187,7 @@ export default function Customers() {
               </TableHeader>
               <TableBody>
                 {visible.map(c => (
-                  <TableRow key={c.name} className="hover:bg-card/50 transition-colors">
+                  <TableRow key={c.id} className="hover:bg-card/50 transition-colors">
                     <TableCell className="font-medium">{c.name}</TableCell>
                     <TableCell>{c.contractsCount}</TableCell>
                     <TableCell>{c.totalRent.toLocaleString('ar-LY')} د.ل</TableCell>
@@ -195,7 +195,7 @@ export default function Customers() {
                     <TableCell>{(c.totalRent - c.totalPaid).toLocaleString('ar-LY')} د.ل</TableCell>
                     <TableCell>
                       <div className="flex gap-2">
-                        <Button size="sm" onClick={() => openCustomer(c.name)}>عرض</Button>
+                        <Button size="sm" onClick={() => openCustomer(c.id)}>عرض</Button>
                       </div>
                     </TableCell>
                   </TableRow>
