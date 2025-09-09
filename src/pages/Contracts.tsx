@@ -150,6 +150,31 @@ export default function Contracts() {
     }
   };
 
+  const openAssignDialog = (contractNumber: string, currentCustomerId?: string | null) => {
+    setAssignContractNumber(contractNumber);
+    setAssignCustomerId(currentCustomerId ?? null);
+    setAssignOpen(true);
+  };
+
+  const saveAssign = async () => {
+    if (!assignContractNumber || !assignCustomerId) {
+      toast.error('اختر زبونًا ثم احفظ');
+      return;
+    }
+    const customer = customersList.find(c => c.id === assignCustomerId);
+    try {
+      await updateContract(assignContractNumber, { customer_id: assignCustomerId, 'Customer Name': customer?.name || '' });
+      toast.success('تم تحديث العميل للعقد');
+      setAssignOpen(false);
+      setAssignContractNumber(null);
+      setAssignCustomerId(null);
+      loadData();
+    } catch (e) {
+      console.error(e);
+      toast.error('فشل تحديث العقد');
+    }
+  };
+
   const getContractStatus = (contract: Contract) => {
     const today = new Date();
     const endDate = new Date(contract.end_date || '');
@@ -368,7 +393,7 @@ export default function Contracts() {
                 <div className="md:col-span-2 space-y-4">
                   <Card className="border">
                     <CardHeader>
-                      <CardTitle className="text-base">اللوحات المختار�� ({formData.billboard_ids.length})</CardTitle>
+                      <CardTitle className="text-base">اللوحات المختارة ({formData.billboard_ids.length})</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="max-h-96 overflow-auto space-y-2">
