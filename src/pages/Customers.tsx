@@ -205,7 +205,7 @@ export default function Customers() {
           <h2>إيصال دفع</h2>
           <p><strong>العميل:</strong> ${payment.customer_name}</p>
           <p><strong>العقد:</strong> ${payment.contract_number || '—'}</p>
-          <p><strong>المبلغ:</strong> ${(Number(payment.amount)||0).toLocaleString('ar-LY')} ��.ل</p>
+          <p><strong>المبلغ:</strong> ${(Number(payment.amount)||0).toLocaleString('ar-LY')} د.ل</p>
           <p><strong>الطريقة:</strong> ${payment.method || '—'}</p>
           <p><strong>المرجع:</strong> ${payment.reference || '—'}</p>
           <p><strong>التاريخ:</strong> ${payment.paid_at ? new Date(payment.paid_at).toLocaleString('ar-LY') : ''}</p>
@@ -234,8 +234,39 @@ export default function Customers() {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
             <Input placeholder="ابحث بالزبون" value={search} onChange={(e)=>setSearch(e.target.value)} />
-            <div className="flex items-center justify-center">
-              <Button onClick={() => { setCustomerNameInput(''); setEditingCustomerId(null); setNewCustomerOpen(true); }}>إضافة زبون جديد</Button>
+            <div className="flex items-center justify-center gap-2">
+              <Button onClick={() => { setCustomerNameInput(''); setCustomerPhoneInput(''); setCustomerCompanyInput(''); setEditingCustomerId(null); setNewCustomerOpen(true); }}>إضافة زبون جديد</Button>
+              <Button onClick={async () => {
+                try {
+                  setSyncing(true);
+                  const { data: sessionData } = await supabase.auth.getSession();
+                  const token = (sessionData as any)?.session?.access_token || null;
+                  const resp = await fetch('/.netlify/functions/sync-customers', {
+                    method: 'POST',
+                    headers: {
+                      'content-type': 'application/json',
+                      ...(token ? { authorization: `Bearer ${token}` } : {})
+                    },
+                    body: JSON.stringify({ createMissing: false })
+                  });
+                  const json = await resp.json();
+                  if (!resp.ok) {
+                    console.error('sync error', json);
+                    toast.error(json?.error || 'فشل المزامنة');
+                  } else {
+                    toast.success(`تمت المزامنة. تم تحديث ${json.updated || 0} عقود، إضافة عملاء: ${json.createdCustomers || 0}`);
+                    // reload data if something changed
+                    if ((json.updated || 0) > 0 || (json.createdCustomers || 0) > 0) loadData();
+                  }
+                } catch (e) {
+                  console.error('sync error', e);
+                  toast.error('خطأ في المزامنة');
+                } finally {
+                  setSyncing(false);
+                }
+              }}>
+                مزامنة العملاء
+              </Button>
             </div>
             <div className="flex items-center text-sm text-muted-foreground">إجمالي المدفوعات: {totalAllPaid.toLocaleString('ar-LY')} د.ل</div>
           </div>
