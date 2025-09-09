@@ -291,32 +291,7 @@ export default function Users() {
                         <div className="flex gap-2">
                           <Button size="sm" onClick={() => handleSave(r)} disabled={savingId === r.id}>حفظ</Button>
                           {isAdmin && (
-                            <Button size="sm" variant="outline" onClick={async () => {
-                              const newPass = window.prompt('أدخل كلمة المرور الجديدة للمستخدم (سيتم إبلاغ المستخدم لاحقاً):');
-                              if (!newPass) return;
-                              try {
-                                const { data: sess } = await supabase.auth.getSession();
-                                const token = (sess as any)?.session?.access_token || '';
-                                const resp = await fetch('/.netlify/functions/admin-set-profile-password', {
-                                  method: 'POST',
-                                  headers: {
-                                    'content-type': 'application/json',
-                                    ...(token ? { authorization: `Bearer ${token}` } : {})
-                                  },
-                                  body: JSON.stringify({ userId: r.id, password: newPass })
-                                });
-                                const json = await resp.json().catch(() => null);
-                                if (!resp.ok) {
-                                  console.error('set password error', json || resp.statusText);
-                                  toast.error(json?.error || 'فشل تحديث كلمة المرور');
-                                } else {
-                                  toast.success('تم تحديث كلمة المرور');
-                                }
-                              } catch (e) {
-                                console.error('set password error', e);
-                                toast.error('فشل تحديث كلمة المرور');
-                              }
-                            }}>تغيير كلمة المرور</Button>
+                            <Button size="sm" variant="outline" onClick={() => { setPasswordTargetId(r.id); setPasswordNew(''); setPasswordConfirm(''); setPasswordModalOpen(true); }}>تغيير كلمة المرور</Button>
                           )}
                         </div>
                       </TableCell>
