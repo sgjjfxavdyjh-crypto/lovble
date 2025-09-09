@@ -4,7 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { getPriceFor, CustomerType, CUSTOMERS } from '@/data/pricing';
 import { Button } from '@/components/ui/button';
-import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
+import { PDFDocument, rgb } from 'pdf-lib';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -720,7 +720,7 @@ export default function Contracts() {
                             } catch (e) {
                               console.error('print contract error', e);
                               // use toast if available
-                              try { toast.error('فشل إنشاء ملف العقد'); } catch {}
+                              try { toast.error('فشل إنشاء ملف العق��'); } catch {}
                             } finally {
                               setPrinting(null);
                             }
@@ -749,7 +749,7 @@ export default function Contracts() {
             <div className="text-center py-8">
               <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-foreground mb-2">لا توجد عقود</h3>
-              <p className="text-muted-foreground">ابدأ بإنشاء عقد جديد</p>
+              <p className="text-muted-foreground">ابدأ بإ��شاء عقد جديد</p>
             </div>
           )}
         </CardContent>
