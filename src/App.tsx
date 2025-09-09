@@ -12,7 +12,6 @@ import Contracts from "./pages/Contracts";
 import ContractCreate from "./pages/ContractCreate";
 import ContractEdit from "./pages/ContractEdit";
 import Billboards from "./pages/Billboards";
-import Bookings from "./pages/Bookings";
 import Users from "./pages/Users";
 import PricingList from "./pages/PricingList";
 import Settings from "./pages/Settings";
