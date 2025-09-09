@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { getPriceFor, CustomerType, CUSTOMERS } from '@/data/pricing';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -594,7 +595,7 @@ export default function Contracts() {
           
           {selectedContract && (
             <div className="space-y-6">
-              {/* معلومات العقد */}
+              {/* معلوم��ت العقد */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Card>
                   <CardHeader>
