@@ -300,6 +300,7 @@ export default function Customers() {
                     <TableCell>
                       <div className="flex gap-2">
                         <Button size="sm" onClick={() => openCustomer(c.id)}>عرض</Button>
+                        <Button size="sm" variant="outline" onClick={() => { setEditingCustomerId(c.id); setCustomerNameInput(c.name); setNewCustomerOpen(true); }}>تعديل</Button>
                       </div>
                     </TableCell>
                   </TableRow>
