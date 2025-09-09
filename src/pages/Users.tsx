@@ -221,7 +221,7 @@ export default function Users() {
           ) : error ? (
             <div className="text-destructive">خطأ: {error}</div>
           ) : rows.length === 0 ? (
-            <div className="text-muted-foreground py-8 text-center">لا يوجد مس��خدمون</div>
+            <div className="text-muted-foreground py-8 text-center">لا يوجد مستخدمون</div>
           ) : (
             <div className="overflow-x-auto">
               <Table>
@@ -251,7 +251,7 @@ export default function Users() {
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="admin">مدير</SelectItem>
-                            <SelectItem value="client">عميل</SelectItem>
+                            <SelectItem value="client">زبون</SelectItem>
                           </SelectContent>
                         </Select>
                       </TableCell>
@@ -271,7 +271,7 @@ export default function Users() {
                           onValueChange={(val) => setRows((prev) => prev.map((x) => x.id === r.id ? { ...x, price_tier: val } : x))}
                         >
                           <SelectTrigger>
-                            <SelectValue placeholder="اختر ال��ئة" />
+                            <SelectValue placeholder="اختر الفئة" />
                           </SelectTrigger>
                           <SelectContent>
                             {CUSTOMERS.map(c => (
