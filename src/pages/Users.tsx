@@ -221,7 +221,7 @@ export default function Users() {
           ) : error ? (
             <div className="text-destructive">خطأ: {error}</div>
           ) : rows.length === 0 ? (
-            <div className="text-muted-foreground py-8 text-center">لا يوجد مستخدمون</div>
+            <div className="text-muted-foreground py-8 text-center">لا يوجد مس��خدمون</div>
           ) : (
             <div className="overflow-x-auto">
               <Table>
@@ -271,7 +271,7 @@ export default function Users() {
                           onValueChange={(val) => setRows((prev) => prev.map((x) => x.id === r.id ? { ...x, price_tier: val } : x))}
                         >
                           <SelectTrigger>
-                            <SelectValue placeholder="اختر الفئة" />
+                            <SelectValue placeholder="اختر ال��ئة" />
                           </SelectTrigger>
                           <SelectContent>
                             {CUSTOMERS.map(c => (
@@ -282,9 +282,38 @@ export default function Users() {
                       </TableCell>
 
                       <TableCell>{r.created_at ? new Date(r.created_at).toLocaleString() : '—'}</TableCell>
-                      <TableCell className="font-mono text-xs">{r.id}</TableCell>
                       <TableCell>
-                        <Button size="sm" onClick={() => handleSave(r)} disabled={savingId === r.id}>حفظ</Button>
+                        <div className="flex gap-2">
+                          <Button size="sm" onClick={() => handleSave(r)} disabled={savingId === r.id}>حفظ</Button>
+                          {isAdmin && (
+                            <Button size="sm" variant="outline" onClick={async () => {
+                              const newPass = window.prompt('أدخل كلمة المرور الجديدة للمستخدم (سيتم إبلاغ المستخدم لاحقاً):');
+                              if (!newPass) return;
+                              try {
+                                const { data: sess } = await supabase.auth.getSession();
+                                const token = (sess as any)?.session?.access_token || '';
+                                const resp = await fetch('/.netlify/functions/admin-set-profile-password', {
+                                  method: 'POST',
+                                  headers: {
+                                    'content-type': 'application/json',
+                                    ...(token ? { authorization: `Bearer ${token}` } : {})
+                                  },
+                                  body: JSON.stringify({ userId: r.id, password: newPass })
+                                });
+                                const json = await resp.json().catch(() => null);
+                                if (!resp.ok) {
+                                  console.error('set password error', json || resp.statusText);
+                                  toast.error(json?.error || 'فشل تحديث كلمة المرور');
+                                } else {
+                                  toast.success('تم تحديث كلمة المرور');
+                                }
+                              } catch (e) {
+                                console.error('set password error', e);
+                                toast.error('فشل تحديث كلمة المرور');
+                              }
+                            }}>تغيير كلمة المرور</Button>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
