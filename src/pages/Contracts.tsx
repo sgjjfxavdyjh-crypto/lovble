@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -312,7 +312,7 @@ export default function Contracts() {
                         />
                       </div>
                       <div>
-                        <Label>الفئة السعرية</Label>
+                        <Label>ا��فئة السعرية</Label>
                         <Select value={pricingCategory} onValueChange={(v)=>setPricingCategory(v as CustomerType)}>
                           <SelectTrigger><SelectValue placeholder="الفئة" /></SelectTrigger>
                           <SelectContent>
