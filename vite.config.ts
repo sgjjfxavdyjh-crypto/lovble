@@ -16,6 +16,8 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      // Use ESM build of pako to avoid default export issues
+      "pako": path.resolve(__dirname, "./node_modules/pako/dist/pako.esm.mjs"),
     },
   },
 }));
