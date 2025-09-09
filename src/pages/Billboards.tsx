@@ -24,6 +24,11 @@ export default function Billboards() {
   const [editing, setEditing] = useState<Billboard | null>(null);
   const [editForm, setEditForm] = useState<any>({});
   const [saving, setSaving] = useState(false);
+
+  // Add billboard dialog
+  const [addOpen, setAddOpen] = useState(false);
+  const [addForm, setAddForm] = useState<any>({});
+  const [adding, setAdding] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const PAGE_SIZE = 40;
 
@@ -120,7 +125,7 @@ export default function Billboards() {
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">��اري تحميل اللوحات الإعلانية...</p>
+          <p className="text-muted-foreground">��اري تحميل اللوحات ا��إعلانية...</p>
         </div>
       </div>
     );
