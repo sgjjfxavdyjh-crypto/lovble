@@ -32,6 +32,7 @@ export default function Contracts() {
   const [createOpen, setCreateOpen] = useState(false);
   const [viewOpen, setViewOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
   const [selectedContract, setSelectedContract] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
