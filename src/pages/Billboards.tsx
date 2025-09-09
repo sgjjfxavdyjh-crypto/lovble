@@ -46,10 +46,34 @@ export default function Billboards() {
       Contract_Number: (bb as any).contractNumber || (bb as any).Contract_Number || '',
       Customer_Name: (bb as any).clientName || (bb as any).Customer_Name || '',
       Ad_Type: (bb as any).adType || (bb as any).Ad_Type || '',
-      Image_URL: (bb as any).Image_URL || bb.image || ''
+      Image_URL: (bb as any).Image_URL || bb.image || '',
+      // partnership fields
+      is_partnership: !!(bb as any).is_partnership,
+      partner_companies: (bb as any).partner_companies || (bb as any).partners || [],
+      capital: (bb as any).capital || 0,
+      capital_remaining: (bb as any).capital_remaining || (bb as any).capitalRemaining || (bb as any).capital || 0
     });
     setEditOpen(true);
   };
+
+  // initialize add form defaults
+  useEffect(() => {
+    setAddForm({
+      Billboard_Name: '',
+      City: '',
+      Municipality: '',
+      District: '',
+      Nearest_Landmark: '',
+      Size: '',
+      Status: 'available',
+      Level: 'A',
+      Image_URL: '',
+      is_partnership: false,
+      partner_companies: [],
+      capital: 0,
+      capital_remaining: 0
+    });
+  }, []);
 
   const saveEdit = async () => {
     if (!editing) return;
@@ -125,7 +149,7 @@ export default function Billboards() {
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">��اري تحميل اللوحات ا��إعلانية...</p>
+          <p className="text-muted-foreground">��اري تحميل اللوحات الإعلانية...</p>
         </div>
       </div>
     );
