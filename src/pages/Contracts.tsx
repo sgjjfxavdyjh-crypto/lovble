@@ -202,7 +202,7 @@ export default function Contracts() {
     return matchesSearch && matchesCustomer && matchesStatus;
   });
 
-  // تقسيم العقود حسب الحال��
+  // تقسيم العقود حسب الحالة
   const contractStats = {
     total: contracts.length,
     active: contracts.filter(c => {
@@ -591,7 +591,7 @@ export default function Contracts() {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => {/* Navigate to edit */}}
+                          onClick={() => navigate(`/admin/contracts/edit?contract=${String(contract.id)}`)}
                           className="h-8 w-8 p-0"
                         >
                           <Edit className="h-4 w-4" />
