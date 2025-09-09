@@ -1,4 +1,3 @@
-import { useState, useEffect } from 'react';
 import React, { useEffect, useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -96,7 +95,7 @@ export default function Contracts() {
       }
 
       await createContract(formData);
-      toast.success('تم إنشاء العقد بنجاح');
+      toast.success('تم إنشاء ا��عقد بنجاح');
       setCreateOpen(false);
       setFormData({
         customer_name: '',
